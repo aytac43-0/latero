@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { LogOut, Plus, Trash2, CheckCircle, ExternalLink, FileText, Check, X } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 
 export default function Dashboard() {
     const { user, signOut } = useAuth()
@@ -9,11 +10,28 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true)
     const [newItem, setNewItem] = useState({ title: '', content: '', category: 'personal' })
     const [isAdding, setIsAdding] = useState(false)
+    const [searchParams] = useSearchParams()
+
 
     useEffect(() => {
         fetchItems()
     }, [])
 
+    useEffect(() => {
+    const url = searchParams.get('url')
+    const title = searchParams.get('title')
+
+    if (url || title) {
+        setNewItem((prev) => ({
+            ...prev,
+            content: url || '',
+            title: title || ''
+        }))
+        setIsAdding(true)
+    }
+}, [])
+
+    
     const fetchItems = async () => {
         try {
             const { data, error } = await supabase
