@@ -10,8 +10,19 @@ function App() {
   return (
     <Routes>
       <Route path="/auth" element={user ? <Navigate to="/" /> : <Auth />} />
+
       <Route
         path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 👇 EXTENSION İÇİN EKLENEN ROUTE */}
+      <Route
+        path="/add"
         element={
           <ProtectedRoute>
             <Dashboard />
