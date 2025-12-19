@@ -1,8 +1,9 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import Dashboard from './components/Dashboard'
-import Auth from './components/Auth'
-import ProtectedRoute from './components/ProtectedRoute'
-import { useAuth } from './context/AuthContext'
+import { Routes, Route, Navigate } from "react-router-dom"
+import Dashboard from "./components/Dashboard"
+import Auth from "./components/Auth"
+import ProtectedRoute from "./components/ProtectedRoute"
+import AddItem from "./components/AddItem"
+import { useAuth } from "./context/AuthContext"
 
 function App() {
   const { user } = useAuth()
@@ -12,17 +13,16 @@ function App() {
       <Route path="/auth" element={user ? <Navigate to="/" /> : <Auth />} />
 
       <Route
-        path="/"
+        path="/add"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <AddItem />
           </ProtectedRoute>
         }
       />
 
-      {/* 👇 EXTENSION İÇİN EKLENEN ROUTE */}
       <Route
-        path="/add"
+        path="/"
         element={
           <ProtectedRoute>
             <Dashboard />
