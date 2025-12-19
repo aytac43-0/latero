@@ -39,65 +39,106 @@ export default function Auth() {
   }
 
   return (
-    <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column' }}>
-      <div className="card glass" style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <img src="/logo.png" alt="Latero" style={{ width: '48px', height: '48px' }} />
-          <span className="brand-title">Latero</span>
-        </div>
-        <h1 style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.25rem', fontWeight: 500 }}>
-          {isLogin ? 'Welcome Back' : 'Join Latero'}
-        </h1>
-
-        {error && (
-          <div style={{
-            backgroundColor: '#fee2e2',
-            color: '#b91c1c',
-            padding: '0.75rem',
-            borderRadius: 'var(--radius)',
-            marginBottom: '1rem',
-            fontSize: '0.875rem',
-            width: '100%'
-          }}>
-            {error}
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      flexDirection: 'column',
+      background: 'radial-gradient(circle at 50% 10%, rgba(79, 70, 229, 0.15) 0%, transparent 40%)'
+    }}>
+      <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="card glass" style={{
+          width: '100%',
+          maxWidth: '440px', /* Wider card */
+          padding: '2.5rem', /* Larger padding */
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          boxShadow: 'var(--shadow-lg)'
+        }}>
+          {/* Header / Brand */}
+          <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(245, 158, 11, 0.15))',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '0.5rem',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <img src="/logo.svg" alt="Latero" style={{ width: '36px', height: '36px' }} />
+            </div>
+            <h1 style={{ textAlign: 'center', fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.03em' }}>
+              {isLogin ? 'Welcome back' : 'Join Latero'}
+            </h1>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '1rem' }}>
+              {isLogin ? 'Sign in to access your saved items' : 'Start saving the web for later'}
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
-          <div>
-            <input
-              type="email"
-              placeholder="Email"
-              className="input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              className="input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
-          </button>
-        </form>
+          {error && (
+            <div style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
+              fontSize: '0.9rem',
+              width: '100%',
+              border: '1px solid rgba(239, 68, 68, 0.2)'
+            }}>
+              {error}
+            </div>
+          )}
 
-        <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button
-            className="btn-outline"
-            style={{ border: 'none', padding: 0, textDecoration: 'underline', color: 'var(--color-primary)' }}
-            onClick={() => setIsLogin(!isLogin)}
-          >
-            {isLogin ? 'Sign Up' : 'Log In'}
-          </button>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
+            <div>
+              <input
+                type="email"
+                placeholder="name@example.com"
+                className="input-field" /* Use new input class */
+                style={{ height: '52px' }} /* Override specific height for auth */
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                className="input-field"
+                style={{ height: '52px' }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
+              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+            </button>
+          </form>
+
+          <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.94rem', color: 'var(--color-text-tertiary)' }}>
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <button
+              style={{
+                border: 'none',
+                padding: 0,
+                fontWeight: 500,
+                color: 'var(--color-primary)',
+                background: 'none',
+                cursor: 'pointer'
+              }}
+              onClick={() => setIsLogin(!isLogin)}
+            >
+              {isLogin ? 'Sign up' : 'Log in'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
