@@ -1,3 +1,11 @@
+export default function Auth() {
+  return (
+    <div style={{ padding: '4rem', color: 'white' }}>
+      <h1>AUTH PAGE LOADED</h1>
+    </div>
+  )
+}
+
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
