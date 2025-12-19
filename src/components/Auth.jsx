@@ -39,42 +39,67 @@ export default function Auth() {
   }
 
   return (
-    <div className="auth-page">
-      <form className="card" onSubmit={handleSubmit}>
-        <h2>{isLogin ? 'Login' : 'Create account'}</h2>
+    <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column' }}>
+      <div className="card glass" style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <img src="/logo.png" alt="Latero" style={{ width: '48px', height: '48px' }} />
+          <span className="brand-title">Latero</span>
+        </div>
+        <h1 style={{ marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.25rem', fontWeight: 500 }}>
+          {isLogin ? 'Welcome Back' : 'Join Latero'}
+        </h1>
 
-        <input
-          className="input"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        {error && (
+          <div style={{
+            backgroundColor: '#fee2e2',
+            color: '#b91c1c',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius)',
+            marginBottom: '1rem',
+            fontSize: '0.875rem',
+            width: '100%'
+          }}>
+            {error}
+          </div>
+        )}
 
-        <input
-          className="input"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+          <div>
+            <input
+              type="email"
+              placeholder="Email"
+              className="input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
+          </button>
+        </form>
 
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-
-        <button className="btn btn-primary" type="submit" disabled={loading}>
-          {loading ? 'Please wait…' : isLogin ? 'Login' : 'Sign up'}
-        </button>
-
-        <button
-          type="button"
-          className="btn btn-outline"
-          onClick={() => setIsLogin(!isLogin)}
-        >
-          {isLogin ? 'Create an account' : 'I already have an account'}
-        </button>
-      </form>
+        <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--color-text-light)' }}>
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <button
+            className="btn-outline"
+            style={{ border: 'none', padding: 0, textDecoration: 'underline', color: 'var(--color-primary)' }}
+            onClick={() => setIsLogin(!isLogin)}
+          >
+            {isLogin ? 'Sign Up' : 'Log In'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

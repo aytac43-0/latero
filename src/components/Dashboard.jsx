@@ -1,224 +1,170 @@
-import { useEffect, useState } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { LogOut, Plus, Trash2, CheckCircle, ExternalLink, FileText, Check, X } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { Plus, Check, ExternalLink, Trash2, LogOut, CheckCircle } from 'lucide-react'
 
 export default function Dashboard() {
     const { user, signOut } = useAuth()
+    const [newItemUrl, setNewItemUrl] = useState('')
     const [items, setItems] = useState([])
     const [loading, setLoading] = useState(true)
-    const [newItem, setNewItem] = useState({ title: '', content: '', category: 'personal' })
-    const [isAdding, setIsAdding] = useState(false)
-    const [searchParams] = useSearchParams()
-
+    const [adding, setAdding] = useState(false)
 
     useEffect(() => {
         fetchItems()
-    }, [])
+    }, [user])
 
-    useEffect(() => {
-    const url = searchParams.get('url')
-    const title = searchParams.get('title')
-
-    if (url || title) {
-        setNewItem((prev) => ({
-            ...prev,
-            content: url || '',
-            title: title || ''
-        }))
-        setIsAdding(true)
-    }
-}, [])
-
-    
     const fetchItems = async () => {
         try {
             const { data, error } = await supabase
                 .from('items')
                 .select('*')
+                .eq('user_id', user.id)
                 .order('created_at', { ascending: false })
 
             if (error) throw error
-            setItems(data)
+            setItems(data || [])
         } catch (error) {
-            console.error('Error fetching items:', error.message)
+            console.error('Error fetching items:', error)
         } finally {
             setLoading(false)
         }
     }
 
-    const handleAddItem = async (e) => {
+    const addItem = async (e) => {
         e.preventDefault()
-        if (!newItem.content) return
+        if (!newItemUrl.trim()) return
 
+        setAdding(true)
         try {
-            const { data, error } = await supabase
-                .from('items')
-                .insert([{
-                    user_id: user.id,
-                    title: newItem.title || 'Untitled',
-                    content: newItem.content,
-                    category: newItem.category,
-                    status: 'pending'
-                }])
-                .select()
+            const { error } = await supabase.from('items').insert({
+                user_id: user.id,
+                content: newItemUrl,
+                title: newItemUrl,
+                status: 'pending',
+                category: 'personal' // Default category
+            })
 
             if (error) throw error
-            setItems([data[0], ...items])
-            setNewItem({ title: '', content: '', category: 'personal' })
-            setIsAdding(false)
+            setNewItemUrl('')
+            fetchItems()
         } catch (error) {
-            console.error('Error adding item:', error.message)
+            console.error('Error adding item:', error)
+        } finally {
+            setAdding(false)
         }
     }
 
     const toggleStatus = async (id, currentStatus) => {
-        const newStatus = currentStatus === 'done' ? 'pending' : 'done'
+        const newStatus = currentStatus === 'pending' ? 'done' : 'pending'
         try {
-            const { error } = await supabase
-                .from('items')
-                .update({ status: newStatus })
-                .eq('id', id)
-
-            if (error) throw error
+            await supabase.from('items').update({ status: newStatus }).eq('id', id)
+            // Optimistic update
             setItems(items.map(item => item.id === id ? { ...item, status: newStatus } : item))
         } catch (error) {
-            console.error('Error updating item:', error.message)
+            console.error('Error updating status:', error)
+            fetchItems() // Revert on error
         }
     }
 
     const deleteItem = async (id) => {
-        if (!confirm('Are you sure you want to delete this item?')) return
-
+        if (!confirm('Delete this item?')) return
         try {
-            const { error } = await supabase
-                .from('items')
-                .delete()
-                .eq('id', id)
-
-            if (error) throw error
+            await supabase.from('items').delete().eq('id', id)
             setItems(items.filter(item => item.id !== id))
         } catch (error) {
-            console.error('Error deleting item:', error.message)
+            console.error('Error deleting item:', error)
         }
     }
 
-    // Logic for Today View
-    // "Today" items are Pending items created BEFORE today (00:00)
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-
-    const todayItems = items.filter(item => {
-        if (item.status !== 'pending') return false
-        const created = new Date(item.created_at)
-        return created < startOfToday
-    })
-
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <header className="glass" style={{ position: 'sticky', top: 0, zIndex: 10, borderBottom: '1px solid var(--color-border)', padding: '1.25rem 0' }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                        <h1 className="brand-title">Latero</h1>
-                        <span className="brand-subtitle">Save it for later</span>
+        <div style={{ minHeight: '100vh', paddingBottom: '4rem' }}>
+            {/* Header */}
+            <header className="glass" style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 50,
+                padding: '1rem 0',
+                marginBottom: '2rem'
+            }}>
+                <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <img src="/logo.png" alt="Latero" style={{ width: '32px', height: '32px' }} />
+                        <span style={{ fontWeight: '700', fontSize: '1.25rem', letterSpacing: '-0.03em' }}>Latero</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--color-text-light)' }}>{user.email}</span>
-                        <button onClick={signOut} className="btn btn-outline" style={{ padding: '0.4rem' }} title="Logout">
-                            <LogOut size={18} />
-                        </button>
-                    </div>
+                    <button onClick={signOut} className="btn btn-secondary" style={{ padding: '0.5rem' }} title="Sign Out">
+                        <LogOut size={18} />
+                    </button>
                 </div>
             </header>
 
-            <main className="container" style={{ flex: 1, padding: '2rem 1rem' }}>
+            <main className="container">
+                {/* Input Area */}
+                <div style={{ marginBottom: '3rem' }}>
+                    <form onSubmit={addItem} style={{ position: 'relative' }}>
+                        <input
+                            type="url"
+                            placeholder="Paste a link to save for later..."
+                            className="input"
+                            style={{
+                                paddingRight: '140px',
+                                height: '52px',
+                                fontSize: '1rem',
+                                boxShadow: 'var(--shadow-sm)'
+                            }}
+                            value={newItemUrl}
+                            onChange={(e) => setNewItemUrl(e.target.value)}
+                            required
+                        />
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
+                            disabled={adding}
+                            style={{
+                                position: 'absolute',
+                                right: '6px',
+                                top: '6px',
+                                bottom: '6px',
+                                borderRadius: '6px'
+                            }}
+                        >
+                            {adding ? 'Saving...' : 'Save for Later'}
+                        </button>
+                    </form>
+                </div>
 
-                {!isAdding && (
-                    <button
-                        onClick={() => setIsAdding(true)}
-                        className="btn btn-primary"
-                        style={{ width: '100%', marginBottom: '3rem', padding: '1rem', fontSize: '1rem' }}
-                    >
-                        <Plus size={20} /> Add New Item
-                    </button>
-                )}
-
-                {isAdding && (
-                    <div className="card" style={{ marginBottom: '3rem' }}>
-                        <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <input
-                                className="input"
-                                placeholder="Content (URL or Note)"
-                                value={newItem.content}
-                                onChange={(e) => setNewItem({ ...newItem, content: e.target.value })}
-                                autoFocus
-                                required
-                            />
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input
-                                    className="input"
-                                    placeholder="Title (Optional)"
-                                    value={newItem.title}
-                                    onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                                    style={{ flex: 2 }}
-                                />
-                                <select
-                                    className="input"
-                                    value={newItem.category}
-                                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                                    style={{ flex: 1 }}
-                                >
-                                    <option value="personal">Personal</option>
-                                    <option value="work">Work</option>
-                                    <option value="read">Read</option>
-                                    <option value="watch">Watch</option>
-                                </select>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                <button type="button" onClick={() => setIsAdding(false)} className="btn btn-outline">Cancel</button>
-                                <button type="submit" className="btn btn-primary">Save Item</button>
-                            </div>
-                        </form>
-                    </div>
-                )}
-
+                {/* Content */}
                 {loading ? (
-                    <div style={{ textAlign: 'center', color: 'var(--color-text-light)' }}>Loading items...</div>
+                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-tertiary)' }}>Loading...</div>
+                ) : items.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '4rem 1rem', opacity: 0.8 }}>
+                        <div style={{
+                            width: '64px',
+                            height: '64px',
+                            background: 'var(--color-bg-subtle)',
+                            borderRadius: '50%',
+                            margin: '0 auto 1.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--color-text-tertiary)'
+                        }}>
+                            <Plus size={32} />
+                        </div>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>You haven't saved anything yet</h3>
+                        <p style={{ color: 'var(--color-text-secondary)' }}>Latero remembers for you.</p>
+                    </div>
                 ) : (
-                    <>
-                        <section style={{ marginBottom: '4rem' }}>
-                            <h2 style={{ fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-light)', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                Today <span style={{ background: 'var(--color-bg-card)', padding: '0.1rem 0.5rem', borderRadius: '1rem', fontSize: '0.7rem', border: '1px solid var(--color-border)' }}>{todayItems.length}</span>
-                            </h2>
-                            {todayItems.length === 0 ? (
-                                <div style={{ padding: '3rem 2rem', textAlign: 'center', color: 'var(--color-text-light)', background: 'var(--color-bg-card)', borderRadius: 'var(--radius)', border: '1px dashed var(--color-border)' }}>
-                                    <p style={{ fontWeight: 500 }}>You're all caught up. Nice.</p>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'grid', gap: '1rem' }}>
-                                    {todayItems.map(item => (
-                                        <ItemRow key={`today-${item.id}`} item={item} toggleStatus={toggleStatus} deleteItem={deleteItem} />
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-
-                        <section>
-                            <h2 style={{ fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-light)', fontWeight: 600, marginBottom: '1.5rem' }}>All Items</h2>
-                            {items.length === 0 ? (
-                                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-text-light)' }}>
-                                    <p>Nothing here yet. Save something for later.</p>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'grid', gap: '1rem' }}>
-                                    {items.map(item => (
-                                        <ItemRow key={item.id} item={item} toggleStatus={toggleStatus} deleteItem={deleteItem} />
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-                    </>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {items.map(item => (
+                            <ItemRow
+                                key={item.id}
+                                item={item}
+                                toggleStatus={toggleStatus}
+                                deleteItem={deleteItem}
+                            />
+                        ))}
+                    </div>
                 )}
             </main>
         </div>
@@ -235,68 +181,95 @@ function ItemRow({ item, toggleStatus, deleteItem }) {
         }
     }
 
+    const getRelativeTime = (dateString) => {
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffInSeconds = Math.floor((now - date) / 1000)
+
+        if (diffInSeconds < 60) return 'just now'
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+        if (diffInSeconds < 172800) return 'yesterday'
+        return date.toLocaleDateString()
+    }
+
     const isDone = item.status === 'done'
 
+    const handleRowClick = () => {
+        if (isUrl(item.content)) {
+            window.open(item.content, '_blank')
+        }
+    }
+
     return (
-        <div className={`card ${isDone ? 'card-done' : 'card-interactive'}`} style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
-        }}>
+        <div
+            onClick={handleRowClick}
+            className={`card ${isDone ? 'card-done' : 'card-interactive cursor-pointer'}`}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1.25rem',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                transform: isDone ? 'scale(0.98)' : 'scale(1)',
+                position: 'relative',
+                paddingRight: '1rem'
+            }}
+        >
             <button
-                onClick={() => toggleStatus(item.id, item.status)}
+                onClick={(e) => { e.stopPropagation(); toggleStatus(item.id, item.status); }}
                 className="btn-outline"
                 style={{
                     borderRadius: '50%',
-                    width: '28px',
-                    height: '28px',
+                    width: '24px',
+                    height: '24px',
                     padding: 0,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    color: isDone ? 'var(--color-success)' : 'var(--color-text-light)',
-                    borderColor: isDone ? 'var(--color-success)' : 'var(--color-border)'
+                    color: isDone ? 'var(--color-success)' : 'var(--color-border)',
+                    borderColor: isDone ? 'var(--color-success)' : 'var(--color-border)',
+                    background: isDone ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                    transition: 'all 0.2s ease'
                 }}
             >
-                {isDone ? <CheckCircle size={18} /> : null}
+                {isDone ? <Check size={14} /> : null}
             </button>
 
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0, opacity: isDone ? 0.6 : 1, transition: 'opacity 0.2s' }}>
                 <h3 style={{
-                    fontSize: '1.1rem',
+                    fontSize: '0.9375rem',
                     fontWeight: 500,
                     textDecoration: isDone ? 'line-through' : 'none',
-                    color: isDone ? 'var(--color-text-light)' : 'var(--color-text)',
-                    marginBottom: '0.35rem',
-                    lineHeight: 1.4
+                    color: 'var(--color-text)',
+                    marginBottom: '0.125rem',
+                    lineHeight: 1.4,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                 }}>
-                    {item.title || 'Untitled'}
+                    {item.title || item.content}
                 </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-text-light)', fontSize: '0.85rem' }}>
-                    <span className="pill">
-                        {item.category}
-                    </span>
-                    {isUrl(item.content) ? (
-                        <a href={item.content} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-primary)' }}>
-                            <ExternalLink size={12} /> {new URL(item.content).hostname}
-                        </a>
-                    ) : (
-                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>{item.content}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-tertiary)', fontSize: '0.75rem' }}>
+                    {isUrl(item.content) && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', opacity: 0.8 }}>
+                            {new URL(item.content).hostname.replace('www.', '')}
+                        </span>
                     )}
+                    <span>• {getRelativeTime(item.created_at)}</span>
                 </div>
             </div>
 
-            <button
-                onClick={() => deleteItem(item.id)}
-                className="btn-outline"
-                style={{ color: '#ef4444', border: 'none', padding: '0.5rem', opacity: 0.6 }}
-                title="Delete"
-                onMouseEnter={(e) => e.target.style.opacity = 1}
-                onMouseLeave={(e) => e.target.style.opacity = 0.6}
-            >
-                <Trash2 size={18} />
-            </button>
+            <div className="actions-group" style={{ display: 'flex', gap: '0.25rem' }}>
+                <button
+                    onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}
+                    className="btn-secondary"
+                    style={{ padding: '0.35rem', borderRadius: '6px', color: 'var(--color-text-tertiary)' }}
+                    title="Delete"
+                >
+                    <Trash2 size={16} />
+                </button>
+            </div>
         </div>
     )
 }
