@@ -5,11 +5,15 @@ export default function ProtectedRoute({ children }) {
     const { user, loading } = useAuth()
 
     if (loading) {
-        return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem' }}>Loading...</div>
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem' }}>
+                Loading...
+            </div>
+        )
     }
 
     if (!user) {
-        return <Navigate to="/auth" />
+        return <Navigate to="/auth" replace />
     }
 
     return children
