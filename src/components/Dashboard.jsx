@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { Check, Trash2, LogOut, ArrowRight, Link as LinkIcon, Plus, FileText, Pin, Search as SearchIcon, X, Calendar } from 'lucide-react'
+import { Check, Trash2, LogOut, ArrowRight, Link as LinkIcon, Plus, FileText, Pin, Search as SearchIcon, X, Calendar, Settings as SettingsIcon } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function Dashboard() {
-    const { user, signOut } = useAuth()
+    const { user, profile, signOut } = useAuth()
+    const navigate = useNavigate()
     const [newItemContent, setNewItemContent] = useState('')
     const [items, setItems] = useState([])
     const [loading, setLoading] = useState(true)
@@ -14,6 +16,9 @@ export default function Dashboard() {
     const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
     const searchInputRef = useRef(null)
+
+    const isPremium = profile?.plan === 'premium'
+    const ITEM_LIMIT = 50
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme)
@@ -36,7 +41,7 @@ export default function Dashboard() {
     const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark')
 
     useEffect(() => {
-        fetchItems()
+        if (user) fetchItems()
     }, [user])
 
     const fetchItems = async () => {
@@ -70,6 +75,13 @@ export default function Dashboard() {
         e.preventDefault()
         if (!newItemContent.trim()) return
 
+        // CHECK LIMITS
+        if (!isPremium && items.length >= ITEM_LIMIT) {
+            alert('Free plan limit reached (50 items). Please upgrade to Premium to save more.')
+            navigate('/pricing')
+            return
+        }
+
         setAdding(true)
         const content = newItemContent.trim()
 
@@ -77,6 +89,9 @@ export default function Dashboard() {
         const isNote = !isUrl(content)
         const finalContent = isNote ? content : (content.includes('://') ? content : `https://${content}`)
         const title = isNote ? content : finalContent
+        // Default logic for now: Notes go to content (legacy). 
+        // We will enhance this to use user_note column for annotations later if needed,
+        // but for "Just a note" items, sticking to content is fine.
 
         try {
             const { error } = await supabase.from('items').insert({
@@ -220,8 +235,9 @@ export default function Dashboard() {
                         <button onClick={toggleTheme} className="btn-icon" title="Toggle Theme">
                             {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
                         </button>
-                        <button onClick={signOut} className="btn-icon" title="Sign Out">
-                            <LogOut size={20} />
+
+                        <button onClick={() => navigate('/settings')} className="btn-icon" title="Settings">
+                            <SettingsIcon size={20} />
                         </button>
                     </div>
                 </div>
@@ -272,8 +288,8 @@ export default function Dashboard() {
                         <div style={{ textAlign: 'center', color: 'var(--color-text-tertiary)' }}>No matches found.</div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 0', position: 'relative' }}>
-                            <div style={{ position: 'absolute', opacity: 0.03, zIndex: 0, pointerEvents: 'none' }}>
-                                <img src="/logo.svg" alt="" style={{ width: '300px', height: '300px' }} />
+                            <div style={{ position: 'absolute', opacity: 0.05, zIndex: 0, pointerEvents: 'none' }}>
+                                <img src="/logo.svg" alt="" style={{ width: '300px', height: '300px', animation: 'float 6s ease-in-out infinite' }} />
                             </div>
                             <h2 style={{ fontSize: '2rem', marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textAlign: 'center' }}>
                                 Latero remembers what you don't.
@@ -315,6 +331,12 @@ export default function Dashboard() {
                 @media (min-width: 641px) {
                     .search-wrapper input { width: 200px !important; opacity: 1 !important; }
                 }
+
+                @keyframes float {
+                    0% { transform: translateY(0px); }
+                    50% { transform: translateY(-20px); }
+                    100% { transform: translateY(0px); }
+                }
             `}</style>
         </div>
     )
@@ -324,16 +346,31 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
     const isNote = item.category === 'note' || !item.category
     const isDone = item.status === 'done'
     const [isEditing, setIsEditing] = useState(false)
-    const [editTitle, setEditTitle] = useState(item.title)
-    const [editContent, setEditContent] = useState(item.content)
+
+    // Edit States
+    const [editTitle, setEditTitle] = useState(item.title || '')
+    const [editContent, setEditContent] = useState(item.content || '')
+    const [editUserNote, setEditUserNote] = useState(item.user_note || '')
+
+    // Reminder State
+    const [showReminderPicker, setShowReminderPicker] = useState(false)
 
     const handleSave = () => {
-        updateItem(item.id, { title: editTitle, content: editContent })
+        const updates = {
+            title: editTitle,
+            content: editContent,
+            user_note: editUserNote
+        }
+        updateItem(item.id, updates)
         setIsEditing(false)
     }
 
-    const handleRowClick = () => {
+    const handleRowClick = (e) => {
+        // If clicking input/button, ignore
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') return;
+
         if (!isEditing && !isNote) {
+            // Open link
             window.open(item.content, '_blank')
         }
     }
@@ -341,6 +378,12 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
     // Domain helper
     const getDomain = (url) => {
         try { return new URL(url).hostname.replace('www.', '') } catch { return 'link' }
+    }
+
+    // Save reminder
+    const setReminder = (isoDate) => {
+        updateItem(item.id, { reminder_at: isoDate })
+        setShowReminderPicker(false)
     }
 
     if (isEditing) {
@@ -358,12 +401,22 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     className="input-field"
-                    style={{ height: '36px', fontSize: '0.875rem', padding: '0 0.75rem', fontFamily: 'monospace' }}
-                    placeholder="Content (URL or Note)"
+                    style={{ height: '36px', fontSize: '0.875rem', padding: '0 0.75rem', fontFamily: 'monospace', color: 'var(--color-primary)' }}
+                    placeholder={isNote ? "Note Content" : "URL"}
                 />
+
+                {/* Note Field (Always visible in edit mode) */}
+                <textarea
+                    value={editUserNote}
+                    onChange={(e) => setEditUserNote(e.target.value)}
+                    className="input-field"
+                    style={{ height: '80px', fontSize: '0.9rem', padding: '0.75rem', fontFamily: 'inherit', resize: 'vertical' }}
+                    placeholder="Add a personal note..."
+                />
+
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                     <button onClick={() => setIsEditing(false)} className="btn-outline" style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}>Cancel</button>
-                    <button onClick={handleSave} className="btn-primary" style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}>Save</button>
+                    <button onClick={handleSave} className="btn-primary" style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}>Save Changes</button>
                 </div>
             </div>
         )
@@ -373,7 +426,10 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
         <div
             onClick={handleRowClick}
             className={`item-card animate-enter ${isDone ? 'done' : ''}`}
-            style={{ animationDelay: `${index * 50}ms` }}
+            style={{
+                animationDelay: `${index * 50}ms`,
+                borderLeft: item.is_pinned ? '4px solid var(--color-primary)' : '1px solid var(--color-border)',
+            }}
         >
             {/* Left Actions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
@@ -399,7 +455,8 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
                         textDecoration: isDone ? 'line-through' : 'none',
                         color: isDone ? 'var(--color-text-tertiary)' : 'var(--color-text)',
                         marginBottom: '0.25rem',
-                        lineHeight: 1.4
+                        lineHeight: 1.4,
+                        wordBreak: 'break-word'
                     }}>
                         {item.title || item.content}
                     </h4>
@@ -419,11 +476,12 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-text-tertiary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                {/* Metadata Row */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', color: 'var(--color-text-tertiary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
                     {!isNote && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                             <LinkIcon size={12} />
-                            <span>{getDomain(item.content)}</span>
+                            <span style={{ color: 'var(--color-primary)' }}>{getDomain(item.content)}</span>
                         </div>
                     )}
                     {isNote && (
@@ -439,36 +497,63 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
                             {item.category}
                         </span>
                     )}
+
+                    {/* Reminder Badge */}
+                    {item.reminder_at && (
+                        <span className="pill" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Calendar size={10} />
+                            {new Date(item.reminder_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                    )}
                 </div>
+
+                {/* User Note Display */}
+                {item.user_note && (
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: 'var(--color-text-secondary)', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '6px' }}>
+                        {item.user_note}
+                    </div>
+                )}
             </div>
 
             {/* Hover Actions */}
-            <div onClick={(e) => e.stopPropagation()} className="row-actions" style={{ display: 'flex', gap: '0.5rem' }}>
-                {/* Reminder Action - Using a hidden date input for MVP or simple presets if requested. 
-                    User requested Presets (Today, Tomorrow). 
-                    I'll implement a simple cyclic toggle or a long-press menu? 
-                    Let's simpler: Click -> Set for Tomorrow. Long Click -> Custom? 
-                    Actually, a native select with opacity 0 over the icon is a clever hack for mobile menus without UI libs.
-                 */}
-                <div style={{ position: 'relative', width: '20px', height: '20px', overflow: 'hidden' }}>
-                    <Calendar size={18} style={{ color: item.reminder_at ? 'var(--color-primary)' : 'var(--color-text-secondary)', position: 'absolute', pointerEvents: 'none' }} />
-                    <select
-                        style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            if (!val) return;
-                            let date = new Date();
-                            if (val === 'tomorrow') date.setDate(date.getDate() + 1);
-                            if (val === 'next-week') date.setDate(date.getDate() + 7);
-                            // If custom, we could trigger a modal, but let's stick to presets for this robust pass
-                            updateItem(item.id, { reminder_at: date.toISOString() })
-                        }}
-                        defaultValue=""
+            <div onClick={(e) => e.stopPropagation()} className="row-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+
+                {/* Reminder Action */}
+                <div style={{ position: 'relative' }}>
+                    <button
+                        onClick={() => setShowReminderPicker(!showReminderPicker)}
+                        className="btn-icon delete-action"
+                        style={{ color: item.reminder_at ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}
                     >
-                        <option value="" disabled>Remind me...</option>
-                        <option value="tomorrow">Tomorrow</option>
-                        <option value="next-week">Next Week</option>
-                    </select>
+                        <Calendar size={18} />
+                    </button>
+
+                    {showReminderPicker && (
+                        <div className="glass" style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            right: 0,
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            marginBottom: '0.5rem',
+                            zIndex: 50,
+                            boxShadow: 'var(--shadow-lg)',
+                            minWidth: '200px'
+                        }}>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem' }}>Set Reminder</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <button onClick={() => setReminder(new Date(Date.now() + 86400000).toISOString())} className="btn-outline" style={{ justifyContent: 'flex-start', fontSize: '0.8rem' }}>Tomorrow</button>
+                                <button onClick={() => setReminder(new Date(Date.now() + 604800000).toISOString())} className="btn-outline" style={{ justifyContent: 'flex-start', fontSize: '0.8rem' }}>Next Week</button>
+                                <div style={{ height: '1px', background: 'var(--color-border)', margin: '0.25rem 0' }}></div>
+                                <input
+                                    type="datetime-local"
+                                    className="input-field"
+                                    style={{ height: '36px', fontSize: '0.8rem', padding: '0 0.5rem' }}
+                                    onChange={(e) => setReminder(new Date(e.target.value).toISOString())}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <button
@@ -485,6 +570,7 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
                     style={{ color: '#EF4444' }}
                 >
                     <Trash2 size={18} />
+                </button>
             </div>
 
             <style>{`
@@ -499,7 +585,7 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
                 @media (max-width: 640px) {
                     .delete-action { opacity: 1 !important; transform: none !important; padding: 12px; }
                     .row-actions { display: flex; align-items: center; }
-                    .status-btn { width: 28px; height: 28px; } /* Larger touch target */
+                    .status-btn { width: 28px; height: 28px; }
                 }
             `}</style>
         </div>
