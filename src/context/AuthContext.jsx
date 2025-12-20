@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null)
             if (session?.user) {
-                fetchProfile(session.user.id)
+                fetchProfile(session.user.id).finally(() => setLoading(false))
             } else {
                 setLoading(false) // No user, stop loading
             }
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
 
             if (currentUser) {
                 // If switching users or logging in, fetch profile
-                fetchProfile(currentUser.id).then(() => setLoading(false))
+                fetchProfile(currentUser.id).finally(() => setLoading(false))
             } else {
                 setProfile(null)
                 setLoading(false)
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     )
 }

@@ -91,11 +91,11 @@ export default function Auth() {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%' }}>
             <div>
-              <input type="email" placeholder="name@example.com" className="input-field" style={{ height: '52px' }} value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input type="email" placeholder="name@example.com" className="input-field" style={{ height: '52px', paddingRight: '1rem' }} value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             {view !== 'forgot' && (
               <div>
-                <input type="password" placeholder="Password" className="input-field" style={{ height: '52px' }} value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <input type="password" placeholder="Password" className="input-field" style={{ height: '52px', paddingRight: '1rem' }} value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
             )}
 

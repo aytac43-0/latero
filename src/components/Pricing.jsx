@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Check, ArrowLeft } from 'lucide-react'
+import { Check, ArrowLeft, X } from 'lucide-react'
 
 export default function Pricing() {
     const { profile } = useAuth()
@@ -36,8 +36,8 @@ export default function Pricing() {
                         <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}><Check size={18} color="var(--color-primary)" /> 50 Saved Items</li>
                         <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}><Check size={18} color="var(--color-primary)" /> Basic Categories</li>
                         <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}><Check size={18} color="var(--color-primary)" /> Standard Support</li>
-                        <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', color: 'var(--color-text-tertiary)' }}><XIcon /> No Reminders</li>
-                        <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', color: 'var(--color-text-tertiary)' }}><XIcon /> No Editing Notes</li>
+                        <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', color: 'var(--color-text-tertiary)' }}><X size={18} /> No Reminders</li>
+                        <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', color: 'var(--color-text-tertiary)' }}><X size={18} /> No Editing Notes</li>
                     </ul>
 
                     <button

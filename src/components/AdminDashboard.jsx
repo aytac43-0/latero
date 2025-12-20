@@ -30,37 +30,31 @@ export default function AdminDashboard() {
     }, [user, profile, authLoading, navigate])
 
     const fetchData = async () => {
+        // MOCK DATA ONLY (As per Safe Stub requirements)
+        // const { data: profiles, error } = await supabase...
+
         try {
-            // Fetch profiles
-            const { data: profiles, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .order('created_at', { ascending: false })
+            await new Promise(resolve => setTimeout(resolve, 500)) // Fake delay
 
-            if (error) throw error
+            const mockUsers = [
+                { id: '1', email: 'admin@latero.app', role: 'admin', plan: 'premium', created_at: new Date().toISOString() },
+                { id: '2', email: 'user@example.com', role: 'user', plan: 'free', created_at: new Date(Date.now() - 86400000).toISOString() },
+                { id: '3', email: 'pro@example.com', role: 'user', plan: 'premium', created_at: new Date(Date.now() - 172800000).toISOString() }
+            ]
+            setUsers(mockUsers)
 
-            setUsers(profiles || [])
-
-            // Calc stats
-            const total = profiles.length
-            const premium = profiles.filter(p => p.plan === 'premium').length
-            const revenue = premium * 5 // Mock MRR
-
+            const total = mockUsers.length
+            const premium = mockUsers.filter(u => u.plan === 'premium').length
+            const revenue = premium * 5
             setStats({ total, premium, revenue })
 
-            // Mock Payments Fetch (Simulating 'payments' table)
-            // In real app: const { data: paymentData } = await supabase.from('payments').select('*')...
-            const mockPayments = profiles.filter(p => p.plan === 'premium').map(p => ({
-                id: Math.random().toString(36).substr(2, 9),
-                user_email: p.email || 'user@example.com', // Profile might not have email depending on join
-                amount: 5.00,
-                status: 'success',
-                created_at: new Date().toISOString()
-            }))
+            const mockPayments = [
+                { id: 'tx_123', user_email: 'admin@latero.app', amount: 5.00, status: 'success', created_at: new Date().toISOString() }
+            ]
             setPayments(mockPayments)
 
         } catch (error) {
-            console.error('Admin fetch error:', error)
+            console.error('Admin mock error:', error)
         } finally {
             setLoading(false)
         }
