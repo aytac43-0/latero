@@ -1,0 +1,27 @@
+/* Light Mode Overrides */
+[data-theme="light"] {
+    /* Backgrounds: Warm/Clean Light */
+    --color-bg: #F8FAFC;
+    /* Slate 50 */
+    --color-bg-card: #FFFFFF;
+    --color-bg-surface: #F1F5F9;
+    /* Slate 100 */
+
+    /* Text: High Contrast Dark */
+    --color-text: #0F172A;
+    /* Slate 900 */
+    --color-text-secondary: #475569;
+    /* Slate 600 */
+    --color-text-tertiary: #94A3B8;
+    /* Slate 400 */
+
+    /* Borders */
+    --color-border: rgba(0, 0, 0, 0.08);
+    --color-border-hover: rgba(0, 0, 0, 0.12);
+
+    /* Brand remains consistent but adapted if needed */
+    /* Shadows might need to be softer/darker? */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
