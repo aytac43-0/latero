@@ -228,7 +228,7 @@ export default function Dashboard() {
                             justifyContent: 'center',
                             border: '1px solid rgba(255, 255, 255, 0.05)'
                         }}>
-                            <img src="/logo.png" alt="Latero" style={{ width: '24px', height: '24px' }} />
+                            <img src="/logo.svg" alt="Latero" style={{ width: '24px', height: '24px' }} />
                         </div>
                         <h1 style={{ fontSize: '1.5rem', margin: 0, fontWeight: 700 }} className="brand-text">Latero</h1>
                     </div>
@@ -370,7 +370,7 @@ export default function Dashboard() {
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 0', position: 'relative' }}>
                             <div style={{ position: 'absolute', opacity: 0.05, zIndex: 0, pointerEvents: 'none' }}>
-                                <img src="/logo.png" alt="" style={{ width: '300px', height: '300px', animation: 'float 6s ease-in-out infinite' }} />
+                                <img src="/logo.svg" alt="" style={{ width: '300px', height: '300px', animation: 'float 6s ease-in-out infinite' }} />
                             </div>
                             <h2 style={{ fontSize: '2rem', marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textAlign: 'center' }}>
                                 Latero remembers what you don't.
