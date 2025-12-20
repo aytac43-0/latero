@@ -66,7 +66,7 @@ export default function Auth() {
               borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               marginBottom: '0.5rem', border: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
-              <img src="/logo.svg" alt="Latero" style={{ width: '36px', height: '36px' }} />
+              <img src="/logo.png" alt="Latero" style={{ width: '36px', height: '36px' }} />
             </div>
             <h1 style={{ textAlign: 'center', fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.03em' }}>
               {view === 'forgot' ? 'Reset Password' : (view === 'login' ? 'Welcome back' : 'Join Latero')}
@@ -121,9 +121,10 @@ export default function Auth() {
         </div>
       </div>
       <style>{`
-        .auth-card { padding: 2.5rem; }
+        .auth-card { padding: 2.5rem; width: 100%; box-sizing: border-box; }
         @media (max-width: 480px) {
             .auth-card { padding: 1.5rem; }
+            .container { padding: 1rem; }
         }
         .text-link {
             border: none; padding: 0; background: none; cursor: pointer;

@@ -8,6 +8,11 @@ export default function Dashboard() {
     const { user, profile, signOut } = useAuth()
     const navigate = useNavigate()
     const [newItemContent, setNewItemContent] = useState('')
+    const [newItemNote, setNewItemNote] = useState('')
+    const [newItemReminder, setNewItemReminder] = useState('') // ISO string or empty
+    const [showAddDetails, setShowAddDetails] = useState(false)
+
+    // ... existing items state ...
     const [items, setItems] = useState([])
     const [loading, setLoading] = useState(true)
     const [adding, setAdding] = useState(false)
@@ -50,7 +55,7 @@ export default function Dashboard() {
                 .from('items')
                 .select('*')
                 .eq('user_id', user.id)
-                .order('is_pinned', { ascending: false }) // Pinned first
+                .order('is_pinned', { ascending: false })
                 .order('created_at', { ascending: false })
 
             if (error) throw error
@@ -73,7 +78,8 @@ export default function Dashboard() {
 
     const addItem = async (e) => {
         e.preventDefault()
-        if (!newItemContent.trim()) return
+        // Validation: Must have at least content OR note
+        if (!newItemContent.trim() && !newItemNote.trim()) return
 
         // CHECK LIMITS
         if (!isPremium && items.length >= ITEM_LIMIT) {
@@ -83,28 +89,50 @@ export default function Dashboard() {
         }
 
         setAdding(true)
-        const content = newItemContent.trim()
+        const mainInput = newItemContent.trim()
+        const userNote = newItemNote.trim()
 
-        // Flexible Logic: Check if it's a URL, otherwise Note
-        const isNote = !isUrl(content)
-        const finalContent = isNote ? content : (content.includes('://') ? content : `https://${content}`)
-        const title = isNote ? content : finalContent
-        // Default logic for now: Notes go to content (legacy). 
-        // We will enhance this to use user_note column for annotations later if needed,
-        // but for "Just a note" items, sticking to content is fine.
+        // Flexible Logic
+        const isNoteType = !isUrl(mainInput) && mainInput.length > 0
+        // If empty main input but has note, treat as note type
+        const treatAsNote = isNoteType || (mainInput.length === 0 && userNote.length > 0)
+
+        let finalContent = mainInput
+        let title = mainInput
+
+        if (!treatAsNote && mainInput) {
+            finalContent = mainInput.includes('://') ? mainInput : `https://${mainInput}`
+            title = mainInput // URL as title initially
+        } else if (treatAsNote) {
+            // If main input is empty, use start of note as title/content
+            if (!mainInput) {
+                finalContent = userNote
+                title = userNote.slice(0, 50) + (userNote.length > 50 ? '...' : '')
+            }
+        }
 
         try {
-            const { error } = await supabase.from('items').insert({
+            const payload = {
                 user_id: user.id,
                 content: finalContent,
                 title: title,
                 status: 'pending',
-                category: isNote ? 'note' : 'personal',
-                is_pinned: false
-            })
+                category: treatAsNote ? 'note' : 'personal',
+                is_pinned: false,
+                user_note: userNote,
+                reminder_at: newItemReminder || null
+            }
+
+            const { error } = await supabase.from('items').insert(payload)
 
             if (error) throw error
+
+            // Reset
             setNewItemContent('')
+            setNewItemNote('')
+            setNewItemReminder('')
+            setShowAddDetails(false)
+
             fetchItems()
         } catch (error) {
             console.error('Error adding item:', error)
@@ -113,14 +141,20 @@ export default function Dashboard() {
         }
     }
 
+    // ... (toggleStatus, togglePin, etc. remain the same) ...
+    // we need to view the file to make sure I don't delete them or I need to include them if I am replacing the whole block.
+    // The instructions say "Rewrite the addItem section (form and state)". 
+    // I will target the code FROM `const [newItemContent` TO the end of `addItem` logic, 
+    // BUT checking the line numbers, `addItem` ends at 114.
+    // I will replace lines 10-114. Wait, that includes `fetchItems` and `useEffect`s. 
+    // I need to be careful. The block above replaces lines 10-63 + addItem.
+    // It seems safe to replace the big chunk.
+
     const toggleStatus = async (id, currentStatus) => {
         const newStatus = currentStatus === 'pending' ? 'done' : 'pending'
         try {
             await supabase.from('items').update({ status: newStatus }).eq('id', id)
-            // Optimistic
             setItems(items.map(item => item.id === id ? { ...item, status: newStatus } : item))
-
-            // Inbox Zero Check could go here
         } catch (error) {
             console.error('Error updating status:', error)
             fetchItems()
@@ -131,7 +165,6 @@ export default function Dashboard() {
         const newPinned = !currentPinned
         try {
             await supabase.from('items').update({ is_pinned: newPinned }).eq('id', id)
-            // Optimistic: Update and Re-sort
             const updatedItems = items.map(item => item.id === id ? { ...item, is_pinned: newPinned } : item)
                 .sort((a, b) => {
                     if (a.is_pinned === b.is_pinned) return new Date(b.created_at) - new Date(a.created_at);
@@ -168,7 +201,8 @@ export default function Dashboard() {
     const filteredItems = items.filter(item => {
         const term = searchTerm.toLowerCase()
         return (item.title && item.title.toLowerCase().includes(term)) ||
-            (item.content && item.content.toLowerCase().includes(term))
+            (item.content && item.content.toLowerCase().includes(term)) ||
+            (item.user_note && item.user_note.toLowerCase().includes(term))
     })
 
     return (
@@ -194,7 +228,7 @@ export default function Dashboard() {
                             justifyContent: 'center',
                             border: '1px solid rgba(255, 255, 255, 0.05)'
                         }}>
-                            <img src="/logo.svg" alt="Latero" style={{ width: '24px', height: '24px' }} />
+                            <img src="/logo.png" alt="Latero" style={{ width: '24px', height: '24px' }} />
                         </div>
                         <h1 style={{ fontSize: '1.5rem', margin: 0, fontWeight: 700 }} className="brand-text">Latero</h1>
                     </div>
@@ -248,34 +282,81 @@ export default function Dashboard() {
                 {/* COMMAND BAR */}
                 <section style={{ marginBottom: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <form onSubmit={addItem} style={{ width: '100%', position: 'relative', zIndex: 10 }}>
-                        <div className="input-wrapper">
-                            <input
-                                type="text"
-                                className="input-field"
-                                placeholder="Paste a link or write a note..."
-                                value={newItemContent}
-                                onChange={(e) => setNewItemContent(e.target.value)}
-                                autoFocus
-                            />
-                            <div style={{
-                                position: 'absolute',
-                                right: '8px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                display: 'flex',
-                                alignItems: 'center'
-                            }}>
-                                <button type="submit" className="btn-primary" disabled={adding}>
-                                    {adding ? (
-                                        <span>Saving...</span>
-                                    ) : (
-                                        <>
-                                            <span style={{ marginRight: '0.5rem', display: 'none' }} className="desktop-inline">Save</span>
+                        <div className="input-wrapper" style={{
+                            height: showAddDetails ? 'auto' : '64px',
+                            padding: showAddDetails ? '1rem' : '0 1.5rem',
+                            paddingRight: showAddDetails ? '1rem' : '180px',
+                            display: 'flex', flexDirection: 'column', gap: '0.5rem',
+                            transition: 'all 0.2s'
+                        }}>
+                            {/* Main Input */}
+                            <div style={{ position: 'relative', width: '100%' }}>
+                                <input
+                                    type="text"
+                                    className="input-field-clean"
+                                    placeholder="Paste a link or write a note..."
+                                    value={newItemContent}
+                                    onChange={(e) => setNewItemContent(e.target.value)}
+                                    onFocus={() => setShowAddDetails(true)}
+                                    style={{
+                                        width: '100%', height: '64px', background: 'transparent', border: 'none',
+                                        fontSize: '1.125rem', color: 'var(--color-text)', outline: 'none'
+                                    }}
+                                />
+                                {!showAddDetails && (
+                                    <div style={{
+                                        position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+                                        display: 'flex', alignItems: 'center'
+                                    }}>
+                                        <button type="submit" className="btn-primary" disabled={adding}>
                                             <ArrowRight size={18} />
-                                        </>
-                                    )}
-                                </button>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Expanded Fields */}
+                            {showAddDetails && (
+                                <div className="animate-enter" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                                    <textarea
+                                        placeholder="Add a description or note (optional)..."
+                                        value={newItemNote}
+                                        onChange={(e) => setNewItemNote(e.target.value)}
+                                        style={{
+                                            width: '100%', height: '80px', background: 'rgba(255,255,255,0.03)',
+                                            border: '1px solid var(--color-border)', borderRadius: '8px',
+                                            padding: '0.75rem', color: 'var(--color-text)', resize: 'none',
+                                            fontFamily: 'inherit', fontSize: '0.9rem'
+                                        }}
+                                    />
+
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <div style={{ position: 'relative' }}>
+                                                <button type="button" className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
+                                                    <Calendar size={14} />
+                                                    {newItemReminder ? new Date(newItemReminder).toLocaleDateString() : 'Set Reminder'}
+                                                </button>
+                                                <input
+                                                    type="datetime-local"
+                                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
+                                                    onChange={(e) => setNewItemReminder(e.target.value)}
+                                                />
+                                            </div>
+                                            {newItemReminder && (
+                                                <button type="button" onClick={() => setNewItemReminder('')} style={{ fontSize: '0.8rem', color: '#EF4444' }}>Clear</button>
+                                            )}
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button type="button" onClick={() => setShowAddDetails(false)} style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9rem' }}>Cancel</button>
+                                            <button type="submit" className="btn-primary" disabled={adding} style={{ padding: '0.5rem 1.5rem', height: '40px', fontSize: '0.9rem' }}>
+                                                {adding ? 'Saving...' : 'Save Item'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </form>
                 </section>
@@ -289,7 +370,7 @@ export default function Dashboard() {
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 0', position: 'relative' }}>
                             <div style={{ position: 'absolute', opacity: 0.05, zIndex: 0, pointerEvents: 'none' }}>
-                                <img src="/logo.svg" alt="" style={{ width: '300px', height: '300px', animation: 'float 6s ease-in-out infinite' }} />
+                                <img src="/logo.png" alt="" style={{ width: '300px', height: '300px', animation: 'float 6s ease-in-out infinite' }} />
                             </div>
                             <h2 style={{ fontSize: '2rem', marginBottom: '1rem', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textAlign: 'center' }}>
                                 Latero remembers what you don't.

@@ -11,6 +11,12 @@ export default function AdminDashboard() {
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
 
+    const [activeTab, setActiveTab] = useState('overview')
+    const [plans, setPlans] = useState([
+        { id: 'free', name: 'Free Tier', price: 0, active: true, features: ['50 Items', 'Basic Support'] },
+        { id: 'premium', name: 'Premium', price: 5, active: true, features: ['Unlimited Items', 'Reminders', 'Priority Support'] }
+    ])
+
     // Protect Route
     useEffect(() => {
         if (!authLoading) {
@@ -74,60 +80,113 @@ export default function AdminDashboard() {
 
     return (
         <div className="container" style={{ padding: '2rem 1rem' }}>
-            <button onClick={() => navigate('/')} className="btn-icon" style={{ marginBottom: '1rem' }}>
-                <ArrowLeft size={24} />
-            </button>
-            <h1 style={{ marginBottom: '2rem' }}>Admin Dashboard</h1>
-
-            {/* Stats Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
-                <StatCard icon={<Users />} title="Total Users" value={stats.total} />
-                <StatCard icon={<CreditCard />} title="Premium Subs" value={stats.premium} />
-                <StatCard icon={<Activity />} title="Est. MRR" value={`$${stats.revenue}`} />
-            </div>
-
-            {/* User List */}
-            <div className="card glass" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--color-border)', fontWeight: 600 }}>User Management</div>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
-                                <th style={{ padding: '1rem', fontWeight: 500 }}>Email</th>
-                                <th style={{ padding: '1rem', fontWeight: 500 }}>Plan</th>
-                                <th style={{ padding: '1rem', fontWeight: 500 }}>Role</th>
-                                <th style={{ padding: '1rem', fontWeight: 500 }}>Joined</th>
-                                <th style={{ padding: '1rem', fontWeight: 500 }}>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(user => (
-                                <tr key={user.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                                    <td style={{ padding: '1rem' }}>{user.email || 'No Email (Auth only)'}</td>
-                                    <td style={{ padding: '1rem' }}>
-                                        <span className={`pill ${user.plan === 'premium' ? 'pill-read' : 'pill-personal'}`}>
-                                            {user.plan}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '1rem' }}>{user.role}</td>
-                                    <td style={{ padding: '1rem', color: 'var(--color-text-tertiary)' }}>
-                                        {new Date(user.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td style={{ padding: '1rem' }}>
-                                        <button
-                                            onClick={() => togglePlan(user.id, user.plan)}
-                                            className="btn-outline"
-                                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
-                                        >
-                                            {user.plan === 'premium' ? 'Downgrade' : 'Upgrade'}
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button onClick={() => navigate('/')} className="btn-icon">
+                        <ArrowLeft size={24} />
+                    </button>
+                    <h1 style={{ marginBottom: 0 }}>Admin Dashboard</h1>
+                </div>
+                <div className="glass" style={{ padding: '4px', borderRadius: '12px', display: 'flex', gap: '4px' }}>
+                    <button
+                        onClick={() => setActiveTab('overview')}
+                        className={activeTab === 'overview' ? 'btn-primary' : 'btn-ghost'}
+                        style={{ padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.9rem', color: activeTab === 'overview' ? 'white' : 'var(--color-text-secondary)' }}
+                    >
+                        Overview
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('plans')}
+                        className={activeTab === 'plans' ? 'btn-primary' : 'btn-ghost'}
+                        style={{ padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.9rem', color: activeTab === 'plans' ? 'white' : 'var(--color-text-secondary)' }}
+                    >
+                        Plans
+                    </button>
                 </div>
             </div>
+
+            {activeTab === 'overview' ? (
+                <>
+                    {/* Stats Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+                        <StatCard icon={<Users />} title="Total Users" value={stats.total} />
+                        <StatCard icon={<CreditCard />} title="Premium Subs" value={stats.premium} />
+                        <StatCard icon={<Activity />} title="Est. MRR" value={`$${stats.revenue}`} />
+                    </div>
+
+                    {/* User List */}
+                    <div className="card glass" style={{ padding: 0, overflow: 'hidden' }}>
+                        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--color-border)', fontWeight: 600 }}>User Management</div>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                                        <th style={{ padding: '1rem', fontWeight: 500 }}>Email</th>
+                                        <th style={{ padding: '1rem', fontWeight: 500 }}>Plan</th>
+                                        <th style={{ padding: '1rem', fontWeight: 500 }}>Role</th>
+                                        <th style={{ padding: '1rem', fontWeight: 500 }}>Joined</th>
+                                        <th style={{ padding: '1rem', fontWeight: 500 }}>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users.map(user => (
+                                        <tr key={user.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                            <td style={{ padding: '1rem' }}>{user.email || 'No Email (Auth only)'}</td>
+                                            <td style={{ padding: '1rem' }}>
+                                                <span className={`pill ${user.plan === 'premium' ? 'pill-read' : 'pill-personal'}`}>
+                                                    {user.plan}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '1rem' }}>{user.role}</td>
+                                            <td style={{ padding: '1rem', color: 'var(--color-text-tertiary)' }}>
+                                                {new Date(user.created_at).toLocaleDateString()}
+                                            </td>
+                                            <td style={{ padding: '1rem' }}>
+                                                <button
+                                                    onClick={() => togglePlan(user.id, user.plan)}
+                                                    className="btn-outline"
+                                                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                                                >
+                                                    {user.plan === 'premium' ? 'Downgrade' : 'Upgrade'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                    {plans.map(plan => (
+                        <div key={plan.id} className="card glass" style={{ padding: '2rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                <h3 style={{ fontSize: '1.5rem' }}>{plan.name}</h3>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>${plan.price}<span style={{ fontSize: '0.9rem', color: 'var(--color-text-tertiary)' }}>/mo</span></div>
+                            </div>
+                            <ul style={{ listStyle: 'none', marginBottom: '2rem', color: 'var(--color-text-secondary)' }}>
+                                {plan.features.map((f, i) => (
+                                    <li key={i} style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-primary)' }}></div>
+                                        {f}
+                                    </li>
+                                ))}
+                            </ul>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button className="btn-outline" style={{ flex: 1, padding: '0.75rem', border: '1px solid var(--color-border)', borderRadius: '8px', color: 'var(--color-text)' }}>Edit Plan</button>
+                                <button className="btn-outline" style={{ flex: 1, padding: '0.75rem', border: '1px solid var(--color-border)', borderRadius: '8px', color: '#EF4444' }}>{plan.active ? 'Deactivate' : 'Activate'}</button>
+                            </div>
+                        </div>
+                    ))}
+                    <div className="card glass" style={{ padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed', cursor: 'pointer', minHeight: '300px' }}>
+                        <div style={{ textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>+</div>
+                            Create New Plan
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
