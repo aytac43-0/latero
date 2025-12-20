@@ -30,31 +30,44 @@ export default function AdminDashboard() {
     }, [user, profile, authLoading, navigate])
 
     const fetchData = async () => {
-        // MOCK DATA ONLY (As per Safe Stub requirements)
-        // const { data: profiles, error } = await supabase...
-
+        setLoading(true)
         try {
-            await new Promise(resolve => setTimeout(resolve, 500)) // Fake delay
+            // Fetch Profiles
+            const { data: profilesData, error: profilesError, count: profilesCount } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact' })
 
-            const mockUsers = [
-                { id: '1', email: 'admin@latero.app', role: 'admin', plan: 'premium', created_at: new Date().toISOString() },
-                { id: '2', email: 'user@example.com', role: 'user', plan: 'free', created_at: new Date(Date.now() - 86400000).toISOString() },
-                { id: '3', email: 'pro@example.com', role: 'user', plan: 'premium', created_at: new Date(Date.now() - 172800000).toISOString() }
-            ]
-            setUsers(mockUsers)
+            if (profilesError) throw profilesError
+            setUsers(profilesData || [])
 
-            const total = mockUsers.length
-            const premium = mockUsers.filter(u => u.plan === 'premium').length
-            const revenue = premium * 5
-            setStats({ total, premium, revenue })
+            // Fetch Items Count
+            const { count: itemsCount, error: itemsError } = await supabase
+                .from('items')
+                .select('*', { count: 'exact', head: true })
 
-            const mockPayments = [
-                { id: 'tx_123', user_email: 'admin@latero.app', amount: 5.00, status: 'success', created_at: new Date().toISOString() }
-            ]
-            setPayments(mockPayments)
+            if (itemsError) throw itemsError
+
+            const premiumCount = profilesData.filter(u => u.plan === 'premium').length
+            const revenue = premiumCount * 5 // Mock revenue logic based on premium count
+
+            setStats({
+                total: profilesCount || 0,
+                premium: premiumCount,
+                revenue: revenue,
+                items: itemsCount || 0
+            })
+
+            // Mock payments for now as there's no payments table confirmed yet, 
+            // but we'll use a try-catch for a future-proof check
+            try {
+                const { data: paymentsData } = await supabase.from('payments').select('*').limit(10)
+                if (paymentsData) setPayments(paymentsData)
+            } catch (err) {
+                console.log('Payments table likely not created yet, skipping.')
+            }
 
         } catch (error) {
-            console.error('Admin mock error:', error)
+            console.error('Admin fetch error:', error)
         } finally {
             setLoading(false)
         }
@@ -135,6 +148,7 @@ export default function AdminDashboard() {
                     <>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
                             <StatCard icon={<Users />} title="Total Users" value={stats.total} />
+                            <StatCard icon={<Activity />} title="Total Items" value={stats.items} />
                             <StatCard icon={<CreditCard />} title="Premium Subs" value={stats.premium} />
                             <StatCard icon={<Activity />} title="Est. MRR" value={`$${stats.revenue}`} />
                         </div>

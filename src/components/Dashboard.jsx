@@ -581,8 +581,14 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
 
                     {/* Reminder Badge */}
                     {item.reminder_at && (
-                        <span className="pill" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="pill" style={{
+                            background: new Date(item.reminder_at) < new Date() ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                            color: new Date(item.reminder_at) < new Date() ? '#EF4444' : '#F59E0B',
+                            border: `1px solid ${new Date(item.reminder_at) < new Date() ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+                            display: 'flex', alignItems: 'center', gap: '4px'
+                        }}>
                             <Calendar size={10} />
+                            {new Date(item.reminder_at) < new Date() && 'Overdue: '}
                             {new Date(item.reminder_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </span>
                     )}

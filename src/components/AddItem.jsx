@@ -23,9 +23,11 @@ export default function AddItem() {
 
         const url = searchParams.get('url')
         const title = searchParams.get('title')
+        const note = searchParams.get('note')
+        const reminder = searchParams.get('reminder')
 
-        // If no URL, just go home
-        if (!url) {
+        // If no URL and no note, just go home
+        if (!url && !note) {
             navigate('/')
             return
         }
@@ -36,13 +38,16 @@ export default function AddItem() {
 
         const saveItem = async () => {
             try {
-                await supabase.from('items').insert({
+                const payload = {
                     user_id: user.id,
-                    title: title || 'Saved from Extension',
-                    content: url,
-                    category: 'personal',
-                    status: 'pending'
-                })
+                    title: title || (url ? 'Saved from Extension' : (note?.slice(0, 50) || 'New Note')),
+                    content: url || note || '',
+                    category: url ? 'personal' : 'note',
+                    status: 'pending',
+                    user_note: note || '',
+                    reminder_at: reminder || null
+                }
+                await supabase.from('items').insert(payload)
             } catch (error) {
                 console.error('Error saving item:', error)
             } finally {

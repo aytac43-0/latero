@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
-import { Moon, Sun, ArrowLeft, CreditCard, User, Lock, LogOut } from 'lucide-react'
+import { Moon, Sun, ArrowLeft, CreditCard, User, Lock, LogOut, Activity } from 'lucide-react'
 
 export default function Settings() {
     const { user, profile, signOut } = useAuth()
@@ -147,6 +147,19 @@ export default function Settings() {
                         )}
                     </div>
                 </section>
+
+                {profile?.role === 'admin' && (
+                    <section className="settings-section">
+                        <h2 className="section-title"><Activity size={20} /> Administration</h2>
+                        <button
+                            onClick={() => navigate('/admin')}
+                            className="btn-outline"
+                            style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid var(--color-primary)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                        >
+                            <Activity size={18} /> Open Admin Dashboard
+                        </button>
+                    </section>
+                )}
 
                 <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '2rem' }}>
                     <button onClick={handleLogout} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#EF4444', padding: '0.75rem 1.5rem', border: '1px solid currentColor', borderRadius: '8px' }}>
