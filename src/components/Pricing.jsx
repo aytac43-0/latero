@@ -75,7 +75,17 @@ export default function Pricing() {
                     <button
                         className="btn-primary"
                         style={{ width: '100%', padding: '1rem', borderRadius: '12px' }}
-                        onClick={() => !isPremium && alert('Redirecting to Stripe Checkout (Mock)...')}
+                        onClick={() => {
+                            if (isPremium) return
+                            if (!profile) return navigate('/auth')
+
+                            // PayTR Flow Override
+                            const confirmed = confirm('Proceed to Payment? (Simulated PayTR HPP)')
+                            if (confirmed) {
+                                alert('Redirecting to PayTR Secure Payment Page...\n(No live keys configured, this is a mock redirection)')
+                                // In real app: window.location.href = data.paytr_token_url
+                            }
+                        }}
                         disabled={isPremium}
                     >
                         {isPremium ? 'Plan Active' : 'Upgrade Now'}

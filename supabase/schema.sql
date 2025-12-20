@@ -1,3 +1,22 @@
+-- PROFILES
+-- id: uuid references auth.users
+-- email: text
+-- plan: text ('free' | 'premium')
+-- role: text ('user' | 'admin') default 'user'
+
+-- PAYMENTS (Required for PayTR / Admin)
+-- id: uuid
+-- user_id: uuid references profiles.id
+-- amount: numeric
+-- status: text
+-- created_at: timestamp
+
+-- SUBSCRIPTIONS (Optional, can be merged into profiles.plan)
+-- user_id: uuid
+-- is_active: boolean
+-- current_period_end: timestamp
+
+-- ITEM TABLE
 -- Profiles Table: Authentication Extension
 create table public.profiles (
   id uuid references auth.users not null primary key,
