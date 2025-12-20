@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
-import { Moon, Sun, ArrowLeft, CreditCard, User, Lock, LogOut, Activity } from 'lucide-react'
+import { ArrowLeft, CreditCard, User, Lock, LogOut, Activity } from 'lucide-react'
 
 export default function Settings() {
     const { user, profile, signOut } = useAuth()
@@ -104,7 +104,7 @@ export default function Settings() {
 
                 {/* APPEARANCE */}
                 <section className="settings-section">
-                    <h2 className="section-title"><Sun size={20} /> Appearance</h2>
+                    <h2 className="section-title">✨ Appearance</h2>
                     <div className="card glass" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                             <h3 style={{ fontSize: '1rem' }}>Theme</h3>
@@ -112,8 +112,8 @@ export default function Settings() {
                                 {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
                             </p>
                         </div>
-                        <button onClick={toggleTheme} className="btn-icon" style={{ border: '1px solid var(--color-border)' }}>
-                            {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+                        <button onClick={toggleTheme} className="btn-icon" style={{ border: '1px solid var(--color-border)', fontSize: '1.2rem' }}>
+                            {theme === 'dark' ? '🌙' : '☀️'}
                         </button>
                     </div>
                 </section>

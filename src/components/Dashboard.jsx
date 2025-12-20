@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { Check, Trash2, LogOut, ArrowRight, Link as LinkIcon, Plus, FileText, Pin, Search as SearchIcon, X, Calendar, Settings as SettingsIcon, Moon, Sun } from 'lucide-react'
+import { Check, Trash2, LogOut, ArrowRight, Link as LinkIcon, Plus, FileText, Pin, Search as SearchIcon, X, Calendar, Settings as SettingsIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Dashboard() {
@@ -266,8 +266,8 @@ export default function Dashboard() {
                             {isSearchOpen ? <X size={20} /> : <SearchIcon size={20} />}
                         </button>
 
-                        <button onClick={toggleTheme} className="btn-icon" title="Toggle Theme">
-                            {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+                        <button onClick={toggleTheme} className="btn-icon" title="Toggle Theme" style={{ fontSize: '1.2rem' }}>
+                            {theme === 'dark' ? '🌙' : '☀️'}
                         </button>
 
                         <button onClick={() => navigate('/settings')} className="btn-icon" title="Settings">
