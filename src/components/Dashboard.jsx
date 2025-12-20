@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { Check, Trash2, LogOut, ArrowRight, Link as LinkIcon, Plus, FileText, Pin, Search as SearchIcon, X, Calendar, Settings as SettingsIcon } from 'lucide-react'
+import { Check, Trash2, LogOut, ArrowRight, Link as LinkIcon, Plus, FileText, Pin, Search as SearchIcon, X, Calendar, Settings as SettingsIcon, Moon, Sun } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Dashboard() {
