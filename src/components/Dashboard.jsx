@@ -11,6 +11,8 @@ export default function Dashboard() {
     const [newItemNote, setNewItemNote] = useState('')
     const [newItemReminder, setNewItemReminder] = useState('') // ISO string or empty
     const [showAddDetails, setShowAddDetails] = useState(false)
+    const [toast, setToast] = useState(null) // { message, type }
+    const [editingItem, setEditingItem] = useState(null)
 
     // ... existing items state ...
     const [items, setItems] = useState([])
@@ -123,21 +125,21 @@ export default function Dashboard() {
                 reminder_at: newItemReminder || null
             }
 
-            const { error } = await supabase.from('items').insert(payload)
-
+            const { data, error } = await supabase.from('items').insert(payload).select()
             if (error) throw error
 
-            // Reset
             setNewItemContent('')
             setNewItemNote('')
             setNewItemReminder('')
             setShowAddDetails(false)
-
+            setToast({ message: 'Item saved successfully!', type: 'success' })
             fetchItems()
         } catch (error) {
             console.error('Error adding item:', error)
+            setToast({ message: 'Failed to save item', type: 'error' })
         } finally {
             setAdding(false)
+            setTimeout(() => setToast(null), 3000)
         }
     }
 
@@ -182,8 +184,12 @@ export default function Dashboard() {
             const { error } = await supabase.from('items').update(updates).eq('id', id)
             if (error) throw error
             setItems(items.map(item => item.id === id ? { ...item, ...updates } : item))
+            setToast({ message: 'Changes saved!', type: 'success' })
         } catch (error) {
             console.error('Error updating item:', error)
+            setToast({ message: 'Update failed', type: 'error' })
+        } finally {
+            setTimeout(() => setToast(null), 3000)
         }
     }
 
@@ -388,6 +394,7 @@ export default function Dashboard() {
                                     deleteItem={deleteItem}
                                     togglePin={togglePin}
                                     updateItem={updateItem}
+                                    onEdit={() => setEditingItem(item)}
                                     index={index}
                                 />
                             ))}
@@ -395,6 +402,24 @@ export default function Dashboard() {
                     </div>
                 )}
             </main>
+
+            {/* MODALS & TOASTS */}
+            {editingItem && (
+                <EditModal
+                    item={editingItem}
+                    onClose={() => setEditingItem(null)}
+                    onSave={(updates) => {
+                        updateItem(editingItem.id, updates)
+                        setEditingItem(null)
+                    }}
+                />
+            )}
+
+            {toast && (
+                <div className="toast">
+                    {toast.type === 'success' ? '✅' : '❌'} {toast.message}
+                </div>
+            )}
 
             <style>{`
                 .desktop-inline { display: inline; }
@@ -423,34 +448,87 @@ export default function Dashboard() {
     )
 }
 
-function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index }) {
+function EditModal({ item, onClose, onSave }) {
+    const isNote = item.category === 'note' || !item.category
+    const [title, setTitle] = useState(item.title || '')
+    const [content, setContent] = useState(item.content || '')
+    const [userNote, setUserNote] = useState(item.user_note || '')
+    const [reminder, setReminder] = useState(item.reminder_at || '')
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="card glass animate-enter" onClick={e => e.stopPropagation()} style={{
+                width: '100%', maxWidth: '500px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem'
+            }}>
+                <h3 style={{ marginBottom: '0.5rem' }}>Edit Item</h3>
+
+                <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-tertiary)', marginBottom: '0.4rem' }}>Title / URL</label>
+                    <input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="input-field"
+                        style={{ height: '48px', padding: '0 1rem', fontSize: '1rem', width: '100%' }}
+                        placeholder="Title"
+                    />
+                </div>
+
+                {!isNote && (
+                    <div>
+                        <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-tertiary)', marginBottom: '0.4rem' }}>Source Link</label>
+                        <input
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            className="input-field"
+                            style={{ height: '44px', padding: '0 1rem', fontSize: '0.9rem', fontFamily: 'monospace', width: '100%' }}
+                            placeholder="URL"
+                        />
+                    </div>
+                )}
+
+                <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-tertiary)', marginBottom: '0.4rem' }}>Personal Note</label>
+                    <textarea
+                        value={userNote}
+                        onChange={(e) => setUserNote(e.target.value)}
+                        className="input-field"
+                        style={{ height: '100px', padding: '0.75rem', fontSize: '1rem', resize: 'vertical', width: '100%', fontFamily: 'inherit' }}
+                        placeholder="Add your thoughts..."
+                    />
+                </div>
+
+                <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-tertiary)', marginBottom: '0.4rem' }}>Reminder</label>
+                    <input
+                        type="datetime-local"
+                        value={reminder ? new Date(new Date(reminder).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
+                        onChange={(e) => setReminder(e.target.value)}
+                        className="input-field"
+                        style={{ height: '44px', padding: '0 1rem', fontSize: '0.9rem', width: '100%' }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                    <button onClick={onClose} className="btn-outline" style={{ flex: 1, height: '48px', border: '1px solid var(--color-border)', borderRadius: '12px' }}>Cancel</button>
+                    <button onClick={() => onSave({ title, content, user_note: userNote, reminder_at: reminder })} className="btn-primary" style={{ flex: 1, height: '48px' }}>Save Changes</button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, onEdit, index }) {
     const isNote = item.category === 'note' || !item.category
     const isDone = item.status === 'done'
-    const [isEditing, setIsEditing] = useState(false)
-
-    // Edit States
-    const [editTitle, setEditTitle] = useState(item.title || '')
-    const [editContent, setEditContent] = useState(item.content || '')
-    const [editUserNote, setEditUserNote] = useState(item.user_note || '')
 
     // Reminder State
     const [showReminderPicker, setShowReminderPicker] = useState(false)
-
-    const handleSave = () => {
-        const updates = {
-            title: editTitle,
-            content: editContent,
-            user_note: editUserNote
-        }
-        updateItem(item.id, updates)
-        setIsEditing(false)
-    }
 
     const handleRowClick = (e) => {
         // If clicking input/button, ignore
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') return;
 
-        if (!isEditing && !isNote) {
+        if (!isNote) {
             // Open link
             window.open(item.content, '_blank')
         }
@@ -465,42 +543,6 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
     const setReminder = (isoDate) => {
         updateItem(item.id, { reminder_at: isoDate })
         setShowReminderPicker(false)
-    }
-
-    if (isEditing) {
-        return (
-            <div className="item-card highlighting" style={{ cursor: 'default', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <input
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className="input-field"
-                    style={{ height: '40px', fontSize: '1rem', padding: '0 0.75rem' }}
-                    placeholder="Title"
-                    autoFocus
-                />
-                <input
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="input-field"
-                    style={{ height: '36px', fontSize: '0.875rem', padding: '0 0.75rem', fontFamily: 'monospace', color: 'var(--color-primary)' }}
-                    placeholder={isNote ? "Note Content" : "URL"}
-                />
-
-                {/* Note Field (Always visible in edit mode) */}
-                <textarea
-                    value={editUserNote}
-                    onChange={(e) => setEditUserNote(e.target.value)}
-                    className="input-field"
-                    style={{ height: '80px', fontSize: '0.9rem', padding: '0.75rem', fontFamily: 'inherit', resize: 'vertical' }}
-                    placeholder="Add a personal note..."
-                />
-
-                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                    <button onClick={() => setIsEditing(false)} className="btn-outline" style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}>Cancel</button>
-                    <button onClick={handleSave} className="btn-primary" style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem' }}>Save Changes</button>
-                </div>
-            </div>
-        )
     }
 
     return (
@@ -644,12 +686,12 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, index 
                 </div>
 
                 <button
-                    onClick={() => setIsEditing(true)}
-                    className="btn-icon delete-action"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    onClick={onEdit}
+                    className="btn-icon"
+                    style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem', fontWeight: 600, width: 'auto', padding: '0 0.5rem' }}
                     title="Edit"
                 >
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Edit</span>
+                    Edit
                 </button>
                 <button
                     onClick={() => deleteItem(item.id)}
