@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../supabaseClient'
+import { saveItemHelper } from '../utils/supabaseHelpers'
 
 export default function AddItem() {
     const [searchParams] = useSearchParams()
@@ -15,8 +15,6 @@ export default function AddItem() {
 
         // If not authenticated, redirect to auth page
         if (!user) {
-            // We could optionally pass the current URL as a 'next' param to redirect back after login
-            // But for now, requirements just say redirect to /auth
             navigate('/auth')
             return
         }
@@ -39,15 +37,12 @@ export default function AddItem() {
         const saveItem = async () => {
             try {
                 const payload = {
-                    user_id: user.id,
                     title: title || (url ? 'Saved from Extension' : (note?.slice(0, 50) || 'New Note')),
                     content: url || note || '',
-                    status: 'pending',
                     user_note: note || '',
                     reminder_at: reminder || null
                 }
-                const { error } = await supabase.from('items').insert(payload)
-                if (error) throw error
+                await saveItemHelper(user, payload)
             } catch (error) {
                 console.error('Error saving item:', error)
             } finally {

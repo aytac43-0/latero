@@ -74,5 +74,35 @@ alter table public.items add column if not exists user_note text;
 alter table public.items add column if not exists reminder_at timestamptz;
 alter table public.items add column if not exists is_pinned boolean default false;
 
+-- PLANS TABLE
+create table if not exists public.plans (
+  id text primary key,            -- 'free', 'premium', etc.
+  name text not null,
+  price numeric default 0,
+  is_active boolean default true,
+  features text[],                -- Array of feature strings
+  created_at timestamptz default now()
+);
+
+-- RLS for Plans
+alter table public.plans enable row level security;
+
+create policy "Plans are viewable by everyone"
+  on public.plans for select
+  using ( true );
+
+create policy "Admins can manage plans"
+  on public.plans for all
+  using ( 
+    auth.uid() in (select id from public.profiles where role = 'admin')
+  );
+
+-- Seed Initial Plans
+insert into public.plans (id, name, price, features)
+values 
+  ('free', 'Free Tier', 0, array['50 Items', 'Basic Support']),
+  ('premium', 'Premium', 5, array['Unlimited Items', 'Smart Reminders', 'Priority Support'])
+on conflict (id) do nothing;
+
 -- RLS Update (Ensure pinned items and reminders are covered by existing policies)
 -- (Existing policies likely cover "all rows for user_id", so strictly no change needed if policies are "where user_id = auth.uid()")

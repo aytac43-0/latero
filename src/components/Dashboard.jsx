@@ -3,15 +3,17 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { Check, Trash2, LogOut, ArrowRight, Link as LinkIcon, Plus, FileText, Pin, Search as SearchIcon, X, Calendar, Settings as SettingsIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { saveItemHelper } from '../utils/supabaseHelpers'
 
 export default function Dashboard() {
     const { user, profile, signOut } = useAuth()
     const navigate = useNavigate()
     const [newItemContent, setNewItemContent] = useState('')
     const [newItemNote, setNewItemNote] = useState('')
-    const [newItemReminder, setNewItemReminder] = useState('') // ISO string or empty
+    const [newItemReminder, setNewItemReminder] = useState('')
+    const [newItemIsPinned, setNewItemIsPinned] = useState(false)
     const [showAddDetails, setShowAddDetails] = useState(false)
-    const [toast, setToast] = useState(null) // { message, type }
+    const [toast, setToast] = useState(null)
     const [editingItem, setEditingItem] = useState(null)
 
     // ... existing items state ...
@@ -79,64 +81,46 @@ export default function Dashboard() {
     }
 
     const addItem = async (e) => {
-        e.preventDefault()
-        // Validation: Must have at least content OR note
-        if (!newItemContent.trim() && !newItemNote.trim()) return
+        if (e) e.preventDefault()
 
-        // CHECK LIMITS
-        if (!isPremium && items.length >= ITEM_LIMIT) {
-            alert('Free plan limit reached (50 items). Please upgrade to Premium to save more.')
-            navigate('/pricing')
-            return
-        }
-
-        setAdding(true)
         const mainInput = newItemContent.trim()
         const userNote = newItemNote.trim()
 
-        // Flexible Logic
-        const isNoteType = !isUrl(mainInput) && mainInput.length > 0
-        // If empty main input but has note, treat as note type
-        const treatAsNote = isNoteType || (mainInput.length === 0 && userNote.length > 0)
+        if (!mainInput && !userNote) return
 
-        let finalContent = mainInput
-        let title = mainInput
+        setAdding(true)
 
-        if (!treatAsNote && mainInput) {
-            finalContent = mainInput.includes('://') ? mainInput : `https://${mainInput}`
-            title = mainInput // URL as title initially
-        } else if (treatAsNote) {
-            // If main input is empty, use start of note as title/content
-            if (!mainInput) {
-                finalContent = userNote
-                title = userNote.slice(0, 50) + (userNote.length > 50 ? '...' : '')
-            }
+        // Title logic
+        let title = mainInput || userNote.slice(0, 50) + (userNote.length > 50 ? '...' : '')
+        let content = mainInput
+
+        if (isUrl(mainInput)) {
+            content = mainInput.includes('://') ? mainInput : `https://${mainInput}`
+        } else if (!mainInput && userNote) {
+            content = userNote
         }
 
         try {
             const payload = {
-                user_id: user.id,
-                content: finalContent,
-                title: title,
-                status: 'pending',
-                is_pinned: false,
+                content,
+                title,
                 user_note: userNote,
-                reminder_at: newItemReminder || null
+                reminder_at: newItemReminder || null,
+                is_pinned: newItemIsPinned
             }
 
-            const { data, error } = await supabase.from('items').insert(payload).select()
+            await saveItemHelper(user, payload)
 
-            if (error) throw error
-
+            // Reset
             setNewItemContent('')
             setNewItemNote('')
             setNewItemReminder('')
+            setNewItemIsPinned(false)
             setShowAddDetails(false)
-            setToast({ message: 'Item saved successfully!', type: 'success' })
+            setToast({ message: 'Saved successfully!', type: 'success' })
             fetchItems()
         } catch (error) {
-            console.error('Error adding item:', error)
-            setToast({ message: `Failed to save item: ${error.message || 'Error'}`, type: 'error' })
+            setToast({ message: `Failed: ${error.message || 'Error'}`, type: 'error' })
         } finally {
             setAdding(false)
             setTimeout(() => setToast(null), 3000)
@@ -287,60 +271,46 @@ export default function Dashboard() {
 
                 {/* COMMAND BAR */}
                 <section style={{ marginBottom: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <form onSubmit={addItem} style={{ width: '100%', position: 'relative', zIndex: 10 }}>
-                        <div className="input-wrapper" style={{
-                            height: showAddDetails ? 'auto' : '64px',
-                            padding: showAddDetails ? '1rem' : '0 1.5rem',
-                            paddingRight: showAddDetails ? '1rem' : '180px',
-                            display: 'flex', flexDirection: 'column', gap: '0.5rem',
-                            transition: 'all 0.2s'
-                        }}>
-                            {/* Main Input */}
-                            <div style={{ position: 'relative', width: '100%' }}>
-                                <input
-                                    type="text"
-                                    className="input-field-clean"
-                                    placeholder="Paste a link or write a note..."
-                                    value={newItemContent}
-                                    onChange={(e) => setNewItemContent(e.target.value)}
-                                    onFocus={() => setShowAddDetails(true)}
-                                    style={{
-                                        width: '100%', height: '64px', background: 'transparent', border: 'none',
-                                        fontSize: '1.125rem', color: 'var(--color-text)', outline: 'none'
-                                    }}
-                                />
-                                {!showAddDetails && (
-                                    <div style={{
-                                        position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-                                        display: 'flex', alignItems: 'center'
-                                    }}>
-                                        <button type="submit" className="btn-primary" disabled={adding}>
-                                            <ArrowRight size={18} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                    <div className="card glass" style={{ width: '100%', padding: '1.5rem', position: 'relative', zIndex: 10, borderRadius: '20px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <textarea
+                                placeholder="Paste a link or write a note..."
+                                value={newItemContent}
+                                onChange={(e) => setNewItemContent(e.target.value)}
+                                onFocus={() => setShowAddDetails(true)}
+                                className="input-field-clean"
+                                style={{
+                                    width: '100%',
+                                    minHeight: showAddDetails ? '100px' : '40px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    fontSize: '1.25rem',
+                                    color: 'var(--color-text)',
+                                    outline: 'none',
+                                    resize: 'none',
+                                    padding: '0.5rem 0'
+                                }}
+                            />
 
-                            {/* Expanded Fields */}
                             {showAddDetails && (
-                                <div className="animate-enter" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                                <div className="animate-enter" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.25rem' }}>
                                     <textarea
-                                        placeholder="Add a description or note (optional)..."
+                                        placeholder="Add a detailed description or extra thoughts (optional)..."
                                         value={newItemNote}
                                         onChange={(e) => setNewItemNote(e.target.value)}
                                         style={{
                                             width: '100%', height: '80px', background: 'rgba(255,255,255,0.03)',
-                                            border: '1px solid var(--color-border)', borderRadius: '8px',
+                                            border: '1px solid var(--color-border)', borderRadius: '12px',
                                             padding: '0.75rem', color: 'var(--color-text)', resize: 'none',
-                                            fontFamily: 'inherit', fontSize: '0.9rem'
+                                            fontFamily: 'inherit', fontSize: '0.95rem'
                                         }}
                                     />
 
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                             <div style={{ position: 'relative' }}>
-                                                <button type="button" className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
-                                                    <Calendar size={14} />
+                                                <button type="button" className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', padding: '0.5rem 1rem', borderRadius: '10px' }}>
+                                                    <Calendar size={16} />
                                                     {newItemReminder ? new Date(newItemReminder).toLocaleDateString() : 'Set Reminder'}
                                                 </button>
                                                 <input
@@ -349,22 +319,53 @@ export default function Dashboard() {
                                                     onChange={(e) => setNewItemReminder(e.target.value)}
                                                 />
                                             </div>
-                                            {newItemReminder && (
-                                                <button type="button" onClick={() => setNewItemReminder('')} style={{ fontSize: '0.8rem', color: '#EF4444' }}>Clear</button>
-                                            )}
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setNewItemIsPinned(!newItemIsPinned)}
+                                                className={newItemIsPinned ? 'btn-primary' : 'btn-outline'}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', padding: '0.5rem 1rem', borderRadius: '10px' }}
+                                            >
+                                                <Pin size={16} fill={newItemIsPinned ? 'currentColor' : 'none'} />
+                                                {newItemIsPinned ? 'Pinned' : 'Pin'}
+                                            </button>
                                         </div>
 
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <button type="button" onClick={() => setShowAddDetails(false)} style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9rem' }}>Cancel</button>
-                                            <button type="submit" className="btn-primary" disabled={adding} style={{ padding: '0.5rem 1.5rem', height: '40px', fontSize: '0.9rem' }}>
-                                                {adding ? 'Saving...' : 'Save Item'}
+                                        <div style={{ display: 'flex', gap: '0.75rem', marginLeft: 'auto' }}>
+                                            <button
+                                                onClick={() => {
+                                                    setShowAddDetails(false);
+                                                    setNewItemContent('');
+                                                    setNewItemNote('');
+                                                    setNewItemReminder('');
+                                                    setNewItemIsPinned(false);
+                                                }}
+                                                className="btn-ghost"
+                                                style={{ fontSize: '0.9rem' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={addItem}
+                                                className="btn-primary"
+                                                disabled={adding || (!newItemContent.trim() && !newItemNote.trim())}
+                                                style={{ padding: '0.5rem 2rem', height: '44px', fontWeight: 600 }}
+                                            >
+                                                {adding ? 'Saving...' : 'Save to Latero'}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             )}
+                            {!showAddDetails && newItemContent.trim() && (
+                                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                    <button onClick={addItem} className="btn-primary" disabled={adding} style={{ borderRadius: '12px', padding: '0.5rem 1.5rem' }}>
+                                        <ArrowRight size={20} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    </form>
+                    </div>
                 </section>
 
                 {/* CONTENT */}
