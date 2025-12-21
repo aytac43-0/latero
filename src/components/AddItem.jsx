@@ -42,12 +42,12 @@ export default function AddItem() {
                     user_id: user.id,
                     title: title || (url ? 'Saved from Extension' : (note?.slice(0, 50) || 'New Note')),
                     content: url || note || '',
-                    category: url ? 'personal' : 'note',
                     status: 'pending',
                     user_note: note || '',
                     reminder_at: reminder || null
                 }
-                await supabase.from('items').insert(payload)
+                const { error } = await supabase.from('items').insert(payload)
+                if (error) throw error
             } catch (error) {
                 console.error('Error saving item:', error)
             } finally {

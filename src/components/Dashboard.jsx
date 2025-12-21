@@ -119,13 +119,13 @@ export default function Dashboard() {
                 content: finalContent,
                 title: title,
                 status: 'pending',
-                category: treatAsNote ? 'note' : 'personal',
                 is_pinned: false,
                 user_note: userNote,
                 reminder_at: newItemReminder || null
             }
 
             const { data, error } = await supabase.from('items').insert(payload).select()
+
             if (error) throw error
 
             setNewItemContent('')
@@ -136,7 +136,7 @@ export default function Dashboard() {
             fetchItems()
         } catch (error) {
             console.error('Error adding item:', error)
-            setToast({ message: 'Failed to save item', type: 'error' })
+            setToast({ message: `Failed to save item: ${error.message || 'Error'}`, type: 'error' })
         } finally {
             setAdding(false)
             setTimeout(() => setToast(null), 3000)
@@ -449,7 +449,7 @@ export default function Dashboard() {
 }
 
 function EditModal({ item, onClose, onSave }) {
-    const isNote = item.category === 'note' || !item.category
+    const isNote = !item.content || !item.content.includes('://')
     const [title, setTitle] = useState(item.title || '')
     const [content, setContent] = useState(item.content || '')
     const [userNote, setUserNote] = useState(item.user_note || '')
@@ -518,7 +518,7 @@ function EditModal({ item, onClose, onSave }) {
 }
 
 function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, onEdit, index }) {
-    const isNote = item.category === 'note' || !item.category
+    const isNote = !item.content || !item.content.includes('://')
     const isDone = item.status === 'done'
 
     // Reminder State
@@ -612,13 +612,6 @@ function ItemRow({ item, toggleStatus, deleteItem, togglePin, updateItem, onEdit
                             <FileText size={12} />
                             <span>Note</span>
                         </div>
-                    )}
-
-                    {/* Category Pill */}
-                    {item.category && item.category !== 'personal' && (
-                        <span className={`pill pill-${item.category}`}>
-                            {item.category}
-                        </span>
                     )}
 
                     {/* Reminder Badge */}
