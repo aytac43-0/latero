@@ -257,6 +257,7 @@ export default function Dashboard() {
                         </button>
 
                         <button onClick={toggleTheme} className="btn-icon" title="Toggle Theme" style={{ fontSize: '1.2rem' }}>
+                            {/* Emoji-based theme toggle to avoid lucide-react ReferenceErrors */}
                             {theme === 'dark' ? '🌙' : '☀️'}
                         </button>
 

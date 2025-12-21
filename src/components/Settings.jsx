@@ -113,6 +113,7 @@ export default function Settings() {
                             </p>
                         </div>
                         <button onClick={toggleTheme} className="btn-icon" style={{ border: '1px solid var(--color-border)', fontSize: '1.2rem' }}>
+                            {/* Emoji-based theme toggle */}
                             {theme === 'dark' ? '🌙' : '☀️'}
                         </button>
                     </div>
