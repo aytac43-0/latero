@@ -14,10 +14,7 @@ export const saveItemHelper = async (user, payload) => {
         'user_id',
         'content',
         'title',
-        'status',
-        'user_note',
-        'reminder_at',
-        'is_pinned'
+        'reminder_at'
     ]
 
     const filteredPayload = Object.keys(payload)

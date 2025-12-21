@@ -39,7 +39,6 @@ export default function AddItem() {
                 const payload = {
                     title: title || (url ? 'Saved from Extension' : (note?.slice(0, 50) || 'New Note')),
                     content: url || note || '',
-                    user_note: note || '',
                     reminder_at: reminder || null
                 }
                 await saveItemHelper(user, payload)

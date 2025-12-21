@@ -245,26 +245,22 @@ h6 {
 
 /* Light Mode Overrides - REFINED PORCELAIN THEME */
 [data-theme="light"] {
-  --color-bg: #F1F5F9;
-  /* Soft light gray background */
+  --color-bg: #F8FAFC; /* Slate 50 - Very soft, not pure white */
   --color-bg-card: #FFFFFF;
-  /* Pure white cards */
-  --color-bg-surface: #E2E8F0;
-  /* Muted hover/active surfaces */
+  --color-bg-surface: #F1F5F9; /* Slate 100 */
 
-  --color-text: #1E293B;
-  /* Slate 800 */
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #94A3B8;
+  --color-text: #0F172A; /* Slate 900 */
+  --color-text-secondary: #475569; /* Slate 600 */
+  --color-text-tertiary: #94A3B8; /* Slate 400 */
 
-  --color-border: rgba(0, 0, 0, 0.06);
-  --color-border-hover: rgba(0, 0, 0, 0.12);
+  --color-border: rgba(15, 23, 42, 0.08);
+  --color-border-hover: rgba(15, 23, 42, 0.15);
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
 
-  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg: rgba(255, 255, 255, 0.7);
 }
 
 [data-theme="dark"] {

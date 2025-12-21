@@ -49,12 +49,16 @@ export default function AdminDashboard() {
 
             if (itemsError) throw itemsError
 
-            const premiumCount = profilesData.filter(u => u.plan === 'premium').length
-            const revenue = premiumCount * 5
+            if (itemsError) throw itemsError
+
+            const freeCount = profilesData.filter(u => u.plan === 'free').length
+            const paidCount = profilesData.filter(u => u.plan === 'premium' || u.plan === 'pro').length
+            const revenue = profilesData.reduce((acc, u) => acc + (u.plan === 'premium' ? 5 : (u.plan === 'pro' ? 2 : 0)), 0)
 
             setStats({
                 total: profilesCount || 0,
-                premium: premiumCount,
+                free: freeCount,
+                paid: paidCount,
                 revenue: revenue,
                 items: itemsCount || 0
             })
@@ -151,8 +155,8 @@ export default function AdminDashboard() {
                 {activeTab === 'overview' && (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
                         <StatCard icon={<Users />} title="Total Users" value={stats.total} />
-                        <StatCard icon={<Activity />} title="Total Items" value={stats.items} />
-                        <StatCard icon={<CreditCard />} title="Premium Subs" value={stats.premium} />
+                        <StatCard icon={<Activity />} title="Free Users" value={stats.free} />
+                        <StatCard icon={<CreditCard />} title="Paid Users" value={stats.paid} />
                         <StatCard icon={<Activity />} title="Est. MRR" value={`$${stats.revenue}`} />
                     </div>
                 )}

@@ -38,27 +38,34 @@ export default function Pricing() {
                 {plans.map(plan => {
                     const isUserPlan = profile?.plan === plan.id
                     const isPremiumPlan = plan.id === 'premium'
+                    const isProPlan = plan.id === 'pro'
+
+                    // Feature overrides based on prompt requirements
+                    let features = plan.features || []
+                    if (plan.id === 'free') features = ['Notes', 'Basic Calendar Reminders']
+                    if (plan.id === 'pro') features = ['Advanced Reminders', 'Editing Items', 'Priority Support']
+                    if (plan.id === 'premium') features = ['Unlimited Reminders', 'Priority Sync', 'All Pro Features']
 
                     return (
                         <div key={plan.id} className="card" style={{
                             padding: '2.5rem',
                             background: isPremiumPlan ? 'linear-gradient(145deg, var(--color-bg-card), rgba(79, 70, 229, 0.1))' : 'var(--color-bg-card)',
-                            border: isPremiumPlan ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+                            border: isPremiumPlan ? '1px solid var(--color-primary)' : (isProPlan ? '1px solid #3b82f6' : '1px solid var(--color-border)'),
                             borderRadius: 'var(--radius-lg)',
                             position: 'relative',
                             transform: isUserPlan ? 'scale(1.02)' : 'none',
                             boxShadow: isPremiumPlan ? 'var(--shadow-glow)' : 'none',
-                            opacity: (isPremium && !isPremiumPlan) ? 0.7 : 1
+                            opacity: (profile?.plan === 'premium' && plan.price < 5) ? 0.7 : 1
                         }}>
                             {isUserPlan && <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'var(--color-primary)', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700 }}>ACTIVE</div>}
 
-                            <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: isPremiumPlan ? 'var(--color-primary)' : 'inherit' }}>{plan.name}</h3>
+                            <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: isPremiumPlan ? 'var(--color-primary)' : (isProPlan ? '#3b82f6' : 'inherit') }}>{plan.name}</h3>
                             <div style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '2rem' }}>${plan.price} <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--color-text-tertiary)' }}>/ month</span></div>
 
                             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
-                                {plan.features?.map((f, i) => (
+                                {features.map((f, i) => (
                                     <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                        <Check size={18} color={isPremiumPlan ? "#10B981" : "var(--color-primary)"} />
+                                        <Check size={18} color={isPremiumPlan ? "#10B981" : (isProPlan ? "#3b82f6" : "var(--color-primary)")} />
                                         {f}
                                     </li>
                                 ))}
@@ -66,12 +73,14 @@ export default function Pricing() {
 
                             <button
                                 className={isPremiumPlan ? "btn-primary" : "btn-outline"}
-                                style={{ width: '100%', padding: '1rem', borderRadius: '12px' }}
+                                style={{
+                                    width: '100%', padding: '1rem', borderRadius: '12px',
+                                    background: isProPlan ? 'rgba(59, 130, 246, 0.1)' : undefined,
+                                    borderColor: isProPlan ? '#3b82f6' : undefined
+                                }}
                                 onClick={() => {
                                     if (isUserPlan) return
                                     if (!profile) return navigate('/auth')
-
-                                    // PayTR Flow Override (Mock)
                                     const confirmed = confirm(`Proceed to upgrade to ${plan.name}? (Simulated PayTR)`)
                                     if (confirmed) {
                                         alert('Redirecting to Secure Payment Page...\n(No live keys configured)')
