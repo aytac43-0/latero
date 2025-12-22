@@ -1,89 +1,184 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Privacy Policy - Latero</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 0 16px;
-      line-height: 1.6;
-      color: #222;
-    }
-    h1, h2 {
-      color: #000;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Latero</title>
+    <style>
+        :root {
+            --color-bg: #030712;
+            --color-bg-card: #0F172A;
+            --color-text: #F8FAFC;
+            --color-text-secondary: #94A3B8;
+            --color-primary: #4F46E5;
+            --radius: 12px;
+            --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        [data-theme="light"] {
+            --color-bg: #F8FAFC;
+            --color-bg-card: #FFFFFF;
+            --color-text: #0F172A;
+            --color-text-secondary: #475569;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 4rem 1.5rem;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: var(--color-bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="light"] .card {
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        header {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .logo-box {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #4F46E5, #F59E0B);
+            border-radius: 14px;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-box img {
+            width: 32px;
+            height: 32px;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem;
+            color: var(--color-primary);
+        }
+
+        p, li {
+            color: var(--color-text-secondary);
+            font-size: 1rem;
+        }
+
+        ul {
+            padding-left: 1.25rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            margin-top: 4rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--color-text-tertiary);
+        }
+
+        a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 2rem 1rem; }
+            .card { padding: 1.5rem; }
+            h1 { font-size: 1.75rem; }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <header>
+            <div class="logo-box">
+                <img src="/logo.svg" alt="Latero Logo">
+            </div>
+            <h1>Privacy Policy</h1>
+            <p><strong>Effective Date:</strong> December 22, 2025</p>
+        </header>
 
-<h1>Privacy Policy</h1>
-<p><strong>Effective Date:</strong> 2025-12-22</p>
+        <section class="card">
+            <h2>1. Overview</h2>
+            <p>
+                Latero ("we", "us", "our") is a distraction-free personal management app. This policy explains how we handle your data when you use the Latero mobile application and web platform.
+            </p>
 
-<h2>1. Overview</h2>
-<p>
-This Privacy Policy explains how Latero ("we", "us", "our") collects, uses,
-and protects information when you use the Latero mobile application and web
-platform (the "Service").
-</p>
+            <h2>2. Information Collection</h2>
+            <p>We collect only the following information to provide our services:</p>
+            <ul>
+                <li>Email address (for account creation and login)</li>
+                <li>Authentication and session data</li>
+                <li>Notes, links, and reminders you explicitly save to your account</li>
+            </ul>
 
-<h2>2. Information We Collect</h2>
-<ul>
-  <li>Account information (e.g., email address)</li>
-  <li>Authentication and session data</li>
-  <li>Basic usage data required to operate the Service</li>
-</ul>
+            <h2>3. Usage of Information</h2>
+            <p>Your data is used strictly for:</p>
+            <ul>
+                <li>Authenticated access to your saved items</li>
+                <li>Operating the synchronization features of the service</li>
+                <li>Providing customer support and security updates</li>
+            </ul>
 
-<h2>3. How We Use Information</h2>
-<ul>
-  <li>Create and manage your account</li>
-  <li>Provide login and authentication</li>
-  <li>Operate and improve the Service</li>
-  <li>Prevent fraud and unauthorized access</li>
-</ul>
+            <h2>4. Third-Party Services</h2>
+            <p>
+                We use <strong>Supabase</strong> for authentication and database management. Your data is processed securely through their infrastructure. We do not sell or share your data with advertisers or other third-party entities.
+            </p>
 
-<h2>4. Data Storage & Processing</h2>
-<p>
-We use Supabase as our backend provider for authentication and database
-services. Data is stored and processed using secure infrastructure.
-</p>
+            <h2>5. Data Security</h2>
+            <p>
+                We implement industry-standard security measures, including HTTPS encryption and secure database policies (Row Level Security), to protect your personal information.
+            </p>
 
-<h2>5. Sharing of Information</h2>
-<p>
-We do not sell your personal data. Data is only shared when required to
-operate the Service or comply with legal obligations.
-</p>
+            <h2>6. Your Rights</h2>
+            <p>
+                You can access, update, or delete your account and data at any time through the app settings or by contacting us.
+            </p>
 
-<h2>6. Data Security</h2>
-<p>
-We use HTTPS and standard security practices to protect data. No system is
-100% secure.
-</p>
+            <h2>7. Contact Us</h2>
+            <p>
+                If you have any questions, please contact us at:<br>
+                <strong>autostephelp@gmail.com</strong>
+            </p>
+        </section>
 
-<h2>7. Data Retention</h2>
-<p>
-We retain data only as long as necessary to provide the Service.
-</p>
-
-<h2>8. Your Rights</h2>
-<p>
-You may request access or deletion of your data by contacting us at:
-<br />
-<strong>autostephelp@gmail.com</strong>
-</p>
-
-<h2>9. Changes</h2>
-<p>
-This policy may be updated. Updates will be posted on this page.
-</p>
-
-<h2>10. Contact</h2>
-<p>
-Email: <strong>autostephelp@gmail.com</strong>
-</p>
-
+        <div class="footer">
+            &copy; 2025 Latero. All rights reserved.
+        </div>
+    </div>
 </body>
 </html>
