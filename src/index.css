@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --line-height: 1.6;
   --font-weight-normal: 400;
@@ -243,15 +243,22 @@ h6 {
   }
 }
 
+
 /* Light Mode Overrides - REFINED PORCELAIN THEME */
 [data-theme="light"] {
-  --color-bg: #F8FAFC; /* Slate 50 - Very soft, not pure white */
-  --color-bg-card: #FFFFFF;
-  --color-bg-surface: #F1F5F9; /* Slate 100 */
 
-  --color-text: #0F172A; /* Slate 900 */
-  --color-text-secondary: #475569; /* Slate 600 */
-  --color-text-tertiary: #94A3B8; /* Slate 400 */
+  --color-bg: #F8FAFC;
+  /* Slate 50 - Very soft, not pure white */
+  --color-bg-card: #FFFFFF;
+  --color-bg-surface: #F1F5F9;
+  /* Slate 100 */
+
+  --color-text: #0F172A;
+  /* Slate 900 */
+  --color-text-secondary: #475569;
+  /* Slate 600 */
+  --color-text-tertiary: #94A3B8;
+  /* Slate 400 */
 
   --color-border: rgba(15, 23, 42, 0.08);
   --color-border-hover: rgba(15, 23, 42, 0.15);
@@ -261,14 +268,18 @@ h6 {
   --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
 
   --glass-bg: rgba(255, 255, 255, 0.7);
+
 }
 
 [data-theme="dark"] {
+
   --glass-bg: rgba(11, 18, 32, 0.65);
+
 }
 
 /* Category Pills - REFINED */
 .pill {
+
   padding: 0.2rem 0.6rem;
   border-radius: 8px;
   font-size: 0.725rem;
