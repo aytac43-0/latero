@@ -10,6 +10,7 @@ export default function Auth() {
   const [error, setError] = useState(null)
   const [successMsg, setSuccessMsg] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -18,6 +19,10 @@ export default function Auth() {
     setSuccessMsg(null)
 
     try {
+      if (view === 'signup' && !agreedToPrivacy) {
+        throw new Error("You must agree to the Privacy Policy to create an account.")
+      }
+
       if (view === 'forgot') {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: window.location.origin + '/reset-password',
@@ -99,15 +104,25 @@ export default function Auth() {
               </div>
             )}
 
+            {view === 'signup' && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  id="privacy-check"
+                  required
+                  checked={agreedToPrivacy}
+                  onChange={(e) => setAgreedToPrivacy(e.target.checked)}
+                  style={{ marginTop: '0.25rem', cursor: 'pointer', width: '16px', height: '16px' }}
+                />
+                <label htmlFor="privacy-check" style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: '1.4', cursor: 'pointer' }}>
+                  I have read and agree to the <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Privacy Policy</a>.
+                </label>
+              </div>
+            )}
+
             <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
               {loading ? 'Processing...' : (view === 'forgot' ? 'Send Reset Link' : (view === 'login' ? 'Sign In' : 'Create Account'))}
             </button>
-
-            {view === 'signup' && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', textAlign: 'center', marginTop: '1rem', lineHeight: '1.4' }}>
-                By signing up, you agree to our <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Privacy Policy</a>.
-              </p>
-            )}
           </form>
 
           <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.94rem', color: 'var(--color-text-tertiary)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
