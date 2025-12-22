@@ -1,0 +1,6 @@
+cd C:\Projects\mobile-app
+npx expo start -c
+
+
+ C:\Users\aytac\.gemini\antigravity\scratch\latero
+ git push origin main

@@ -162,6 +162,30 @@ export default function Settings() {
                     </section>
                 )}
 
+                {/* LEGAL */}
+                <section className="settings-section">
+                    <h2 className="section-title"><Lock size={20} /> Legal</h2>
+                    <div className="card glass" style={{ padding: '0', overflow: 'hidden' }}>
+                        <a
+                            href="/privacy-policy.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '1rem 1.5rem',
+                                color: 'var(--color-text)',
+                                textDecoration: 'none',
+                                borderBottom: '1px solid var(--color-border)'
+                            }}
+                        >
+                            <span>Privacy Policy</span>
+                            <span style={{ color: 'var(--color-text-tertiary)' }}>→</span>
+                        </a>
+                    </div>
+                </section>
+
                 <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '2rem' }}>
                     <button onClick={handleLogout} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#EF4444', padding: '0.75rem 1.5rem', border: '1px solid currentColor', borderRadius: '8px' }}>
                         <LogOut size={18} /> Log Out

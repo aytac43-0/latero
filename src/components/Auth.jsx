@@ -102,6 +102,12 @@ export default function Auth() {
             <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={loading}>
               {loading ? 'Processing...' : (view === 'forgot' ? 'Send Reset Link' : (view === 'login' ? 'Sign In' : 'Create Account'))}
             </button>
+
+            {view === 'signup' && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', textAlign: 'center', marginTop: '1rem', lineHeight: '1.4' }}>
+                By signing up, you agree to our <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Privacy Policy</a>.
+              </p>
+            )}
           </form>
 
           <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.94rem', color: 'var(--color-text-tertiary)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
